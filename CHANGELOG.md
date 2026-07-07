@@ -24,3 +24,8 @@ All notable changes to this project will be documented in this file.
 - Added QThread metadata worker infrastructure.
 - Added URL validation, error handling, and metadata loading integration.
 - Stabilized Sprint 3 documentation and imports.
+- Added playlist metadata models and playlist video selection models.
+- Added playlist metadata extraction using yt-dlp JSON output.
+- Added PlaylistDialog for selecting playlist videos.
+- Added playlist selection integration that adds selected videos to the queue.
+- Added playlist error handling and Sprint 4 documentation.

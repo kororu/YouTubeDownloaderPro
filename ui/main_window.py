@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import uuid4
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QCloseEvent
 from PySide6.QtWidgets import QMainWindow, QSplitter, QVBoxLayout, QWidget
@@ -11,10 +13,13 @@ from config.settings import Settings
 from config.settings_manager import SettingsManager
 from core.dependency_checker import DependencyChecker, DependencyCheckResult
 from dialogs.about_dialog import AboutDialog
-from models.download_enums import DownloadFormat, DownloadQuality
+from dialogs.playlist_dialog import PlaylistDialog
+from models.download_enums import DownloadFormat, DownloadQuality, DownloadStatus
 from models.download_item import DownloadItem
+from models.playlist_metadata import PlaylistMetadata, PlaylistVideo
 from models.video_metadata import VideoMetadata
 from services.metadata_worker import MetadataWorker
+from services.playlist_worker import PlaylistWorker
 from services.url_validator import UrlValidationResult, UrlValidator
 from widgets.dependency_notice_widget import DependencyNoticeWidget
 from widgets.footer_widget import FooterWidget
@@ -48,6 +53,8 @@ class MainWindow(QMainWindow):
         self._dependency_result: DependencyCheckResult = DependencyChecker().check()
         self._url_validator: UrlValidator = UrlValidator()
         self._metadata_workers: dict[str, MetadataWorker] = {}
+        self._playlist_workers: dict[str, PlaylistWorker] = {}
+        self._playlist_requests: dict[str, tuple[DownloadFormat, DownloadQuality]] = {}
         self._toolbar_widget: ToolbarWidget
         self._queue_widget: QueueWidget
         self._log_widget: LogWidget
@@ -169,13 +176,24 @@ class MainWindow(QMainWindow):
         self._start_metadata_worker(download_item)
 
     def _add_playlist_to_queue(self, source_url: str, media_format: str, quality: str) -> None:
-        """Validate playlist URL and report current support boundary."""
+        """Validate a playlist URL and load selectable videos."""
         validation_result: UrlValidationResult = self._url_validator.validate(source_url)
-        if not validation_result.is_valid:
+        if not validation_result.is_valid or validation_result.normalized_url is None:
             self._show_input_error(validation_result.error_message or "URL inválida.")
             return
-        self._log_widget.append_warning("La selección de playlist se implementará en Sprint 4.")
-        self._status_widget.set_status_message("playlist pendiente de Sprint 4")
+
+        try:
+            selected_format: DownloadFormat = DownloadFormat(media_format)
+            selected_quality: DownloadQuality = DownloadQuality(quality)
+        except ValueError:
+            self._show_input_error("Formato o calidad no válidos.")
+            return
+
+        request_id: str = str(uuid4())
+        self._playlist_requests[request_id] = (selected_format, selected_quality)
+        self._start_playlist_worker(request_id, validation_result.normalized_url)
+        self._log_widget.append_info(f"Cargando playlist: {validation_result.normalized_url}")
+        self._status_widget.set_status_message("cargando playlist")
 
     def _handle_queue_changed(self, total_items: int, selected_items: int) -> None:
         """Update status when queue selection changes."""
@@ -232,6 +250,71 @@ class MainWindow(QMainWindow):
         """Show validation feedback to the user."""
         self._log_widget.append_error(message)
         self._status_widget.set_status_message("entrada inválida")
+
+    def _start_playlist_worker(self, request_id: str, source_url: str) -> None:
+        """Start asynchronous playlist metadata loading."""
+        worker: PlaylistWorker = PlaylistWorker(request_id, source_url)
+        worker.playlist_loaded.connect(self._handle_playlist_loaded)
+        worker.playlist_failed.connect(self._handle_playlist_failed)
+        worker.finished.connect(lambda completed_id=request_id: self._remove_playlist_worker(completed_id))
+        self._playlist_workers[request_id] = worker
+        worker.start()
+
+    def _handle_playlist_loaded(self, request_id: str, playlist: object) -> None:
+        """Handle successful playlist metadata loading."""
+        if not isinstance(playlist, PlaylistMetadata):
+            self._handle_playlist_failed(request_id, "Respuesta de playlist inválida.")
+            return
+
+        request_preferences: tuple[DownloadFormat, DownloadQuality] | None = self._playlist_requests.pop(
+            request_id,
+            None,
+        )
+        if request_preferences is None:
+            self._log_widget.append_warning("La solicitud de playlist ya no está disponible.")
+            return
+
+        dialog: PlaylistDialog = PlaylistDialog(playlist, self)
+        if dialog.exec() != PlaylistDialog.DialogCode.Accepted:
+            self._log_widget.append_info("Selección de playlist cancelada.")
+            self._status_widget.set_status_message("playlist cancelada")
+            return
+
+        selected_videos: tuple[PlaylistVideo, ...] = dialog.selected_videos()
+        if not selected_videos:
+            self._log_widget.append_warning("No se seleccionaron videos de la playlist.")
+            self._status_widget.set_status_message("sin videos seleccionados")
+            return
+
+        media_format, quality = request_preferences
+        for video in selected_videos:
+            self._queue_widget.add_download_item(
+                DownloadItem(
+                    item_id=str(uuid4()),
+                    source_url=video.source_url,
+                    media_format=media_format,
+                    quality=quality,
+                    status=DownloadStatus.READY,
+                    metadata=video.to_video_metadata(),
+                )
+            )
+
+        self._log_widget.append_info(
+            f"Videos agregados desde playlist: {len(selected_videos)} de {playlist.title}"
+        )
+        self._status_widget.set_status_message("playlist agregada")
+
+    def _handle_playlist_failed(self, request_id: str, error_message: str) -> None:
+        """Handle playlist metadata loading failure."""
+        self._playlist_requests.pop(request_id, None)
+        self._log_widget.append_error(error_message)
+        self._status_widget.set_status_message("error de playlist")
+
+    def _remove_playlist_worker(self, request_id: str) -> None:
+        """Remove a finished playlist worker."""
+        worker: PlaylistWorker | None = self._playlist_workers.pop(request_id, None)
+        if worker is not None:
+            worker.deleteLater()
 
     def _save_settings(self, settings: Settings) -> None:
         """Persist settings changed from the settings panel."""

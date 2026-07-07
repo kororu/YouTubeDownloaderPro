@@ -89,7 +89,8 @@ QProgressBar::chunk {
     border-radius: 4px;
 }
 
-QDialog#aboutDialog {
+QDialog#aboutDialog,
+QDialog#playlistDialog {
     background-color: #24292f;
 }
 
@@ -97,6 +98,31 @@ QLabel#aboutTitle {
     color: #ffffff;
     font-size: 16pt;
     font-weight: 700;
+}
+
+QLabel#playlistTitle {
+    color: #ffffff;
+    font-size: 14pt;
+    font-weight: 700;
+}
+
+QLabel#playlistMetadata {
+    color: #c9d1d9;
+}
+
+QListWidget#playlistVideoList {
+    background-color: #0d1117;
+    border: 1px solid #3d444d;
+    border-radius: 6px;
+    color: #f0f3f6;
+}
+
+QListWidget#playlistVideoList::item {
+    padding: 8px;
+}
+
+QListWidget#playlistVideoList::item:selected {
+    background-color: #1f6feb;
 }
 
 QToolTip {

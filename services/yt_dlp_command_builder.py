@@ -30,6 +30,23 @@ class YtDlpCommandBuilder:
             source_url,
         ]
 
+    def build_playlist_metadata_command(self, source_url: str) -> list[str]:
+        """Build a command that extracts playlist metadata as JSON.
+
+        Args:
+            source_url: Source playlist URL.
+
+        Returns:
+            Command arguments ready for subprocess execution.
+        """
+        return [
+            self.executable_name,
+            "--dump-single-json",
+            "--yes-playlist",
+            "--no-warnings",
+            source_url,
+        ]
+
     def build_download_command(
         self,
         source_url: str,

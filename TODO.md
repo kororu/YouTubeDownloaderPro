@@ -37,6 +37,16 @@
 - Complete Commit 029 - Error handling and validation.
 - Complete Commit 030 - Sprint 3 stabilization.
 
+## Sprint 4
+
+- Complete Commit 031 - Playlist models.
+- Complete Commit 032 - Playlist metadata service.
+- Complete Commit 033 - PlaylistDialog layout.
+- Complete Commit 034 - Playlist selection logic.
+- Complete Commit 035 - Add selected videos to queue.
+- Complete Commit 036 - Playlist error handling.
+- Complete Commit 037 - Sprint 4 stabilization.
+
 ## Next
 
-- Commit 031 - Playlist models.
+- Commit 038 - Download queue service.

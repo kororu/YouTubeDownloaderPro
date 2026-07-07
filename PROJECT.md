@@ -70,6 +70,15 @@ YouTubeDownloaderPro/
 - `UrlValidator` validates user-entered URLs before service execution.
 - UI integration adds metadata-backed queue entries and reports dependency or extraction errors without starting downloads.
 
+## Sprint 4 Playlists
+
+- `PlaylistMetadata` and `PlaylistVideo` model playlist analysis results.
+- `PlaylistMetadataService` extracts playlist data through `yt-dlp --dump-single-json`.
+- `PlaylistWorker` runs playlist analysis on a `QThread`.
+- `PlaylistDialog` lets the user search, select, deselect, and confirm playlist videos.
+- Selected playlist videos are added to the queue as ready metadata-backed items.
+- Playlist dependency and extraction errors are reported through the existing log and status widgets.
+
 ## Engineering Standards
 
 - Python 3.12+ is the supported runtime.
