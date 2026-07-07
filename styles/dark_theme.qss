@@ -12,3 +12,15 @@ QMainWindow {
 QWidget#mainContentArea {
     background-color: #24292f;
 }
+
+QToolTip {
+    background-color: #2f363d;
+    border: 1px solid #57606a;
+    color: #f0f3f6;
+    padding: 6px;
+}
+
+QStatusBar {
+    background-color: #1f2328;
+    color: #c9d1d9;
+}

@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import sys
-from importlib import resources
 from types import TracebackType
+from logging import Logger
 
 from PySide6.QtWidgets import QApplication
 
 from config.app_config import AppConfig
+from core.logger import configure_logging
+from styles.theme_manager import DARK_THEME, ThemeManager
 from ui.main_window import MainWindow
 
 
@@ -23,10 +25,13 @@ class Application:
             config: Runtime application configuration.
         """
         self._config: AppConfig = config or AppConfig()
+        self._logger: Logger = configure_logging()
+        self._logger.info("Starting application bootstrap.")
         self._qt_application: QApplication = QApplication(argv or sys.argv)
+        self._theme_manager: ThemeManager = ThemeManager()
         self._main_window: MainWindow | None = None
         self._configure_metadata()
-        self._load_stylesheet()
+        self._apply_theme()
 
     def run(self) -> int:
         """Show the main window and start the Qt event loop.
@@ -36,6 +41,7 @@ class Application:
         """
         self._main_window = MainWindow(self._config)
         self._main_window.show()
+        self._logger.info("Main window shown.")
         return self._qt_application.exec()
 
     def _configure_metadata(self) -> None:
@@ -43,14 +49,20 @@ class Application:
         self._qt_application.setApplicationName(self._config.application_name)
         self._qt_application.setApplicationVersion(self._config.application_version)
         self._qt_application.setOrganizationName(self._config.organization_name)
-
-    def _load_stylesheet(self) -> None:
-        """Load the bundled dark theme stylesheet."""
-        stylesheet_path: resources.abc.Traversable = resources.files("styles").joinpath(
-            "dark_theme.qss"
+        self._logger.info(
+            "Application metadata configured: name=%s version=%s organization=%s.",
+            self._config.application_name,
+            self._config.application_version,
+            self._config.organization_name,
         )
-        stylesheet: str = stylesheet_path.read_text(encoding="utf-8")
-        self._qt_application.setStyleSheet(stylesheet)
+
+    def _apply_theme(self) -> None:
+        """Apply the configured application theme."""
+        theme_applied: bool = self._theme_manager.apply_theme(self._qt_application, DARK_THEME)
+        if theme_applied:
+            self._logger.info("Theme applied: %s.", DARK_THEME)
+            return
+        self._logger.warning("Theme could not be applied: %s.", DARK_THEME)
 
     def __enter__(self) -> "Application":
         """Enter the application context.
@@ -67,4 +79,5 @@ class Application:
         traceback: TracebackType | None,
     ) -> None:
         """Exit the application context."""
+        self._logger.info("Application context closed.")
         self._main_window = None
