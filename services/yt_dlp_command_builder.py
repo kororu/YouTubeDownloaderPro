@@ -47,6 +47,24 @@ class YtDlpCommandBuilder:
             source_url,
         ]
 
+    def build_playlist_stream_command(self, source_url: str) -> list[str]:
+        """Build a command that streams flat playlist entries as JSON lines.
+
+        Args:
+            source_url: Source playlist or YouTube Mix URL.
+
+        Returns:
+            Command arguments ready for subprocess execution.
+        """
+        return [
+            self.executable_name,
+            "--dump-json",
+            "--flat-playlist",
+            "--yes-playlist",
+            "--no-warnings",
+            source_url,
+        ]
+
     def build_download_command(
         self,
         source_url: str,

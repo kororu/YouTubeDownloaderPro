@@ -6,7 +6,7 @@
 
 Project name: YouTube Downloader Pro
 Author: Ariel Ponce
-Visible version: v0.1.0
+Visible version: v0.2.0
 Target platform: Windows
 Final distribution: PyInstaller executable
 Main technology stack: Python, PySide6, QThread, subprocess.Popen, yt-dlp, ffmpeg, JSON, QSS
@@ -182,7 +182,7 @@ The footer must visibly show:
 
 ```text
 Autor: Ariel Ponce
-Versión: v0.1.0
+Versión: v0.2.0
 ```
 
 Initial main window:
@@ -395,7 +395,7 @@ Requirements:
 * Theme manager loads QSS files.
 * Apply dark theme to `QApplication`.
 * Fail gracefully if QSS file is missing.
-* Prepare for future light theme support.
+* Keep dark theme as the permanent application theme.
 * Keep styles centralized.
 * Keep app runnable.
 
@@ -481,7 +481,7 @@ Requirements:
 * Footer must show:
 
   * Autor: Ariel Ponce
-  * Versión: v0.1.0
+  * Versión: v0.2.0
 * Do not implement download logic yet.
 * Do not use QTreeWidget.
 * QueueWidget must be based on QScrollArea.

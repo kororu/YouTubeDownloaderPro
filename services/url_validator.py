@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,3 +47,12 @@ class UrlValidator:
             return UrlValidationResult(False, None, "La URL debe incluir un dominio válido.")
 
         return UrlValidationResult(True, normalized_url, None)
+
+    def is_youtube_mix_url(self, source_url: str) -> bool:
+        """Return whether a URL looks like an automatically generated YouTube Mix."""
+        parsed_url = urlparse(source_url.strip())
+        query_parameters: dict[str, list[str]] = parse_qs(parsed_url.query)
+        list_values: list[str] = query_parameters.get("list", [])
+        has_radio_parameter: bool = query_parameters.get("start_radio", ["0"])[0] == "1"
+        has_radio_list: bool = any(value.startswith("RD") for value in list_values)
+        return has_radio_parameter or has_radio_list

@@ -1,6 +1,6 @@
 # Project Architecture
 
-YouTube Downloader Pro follows a modular clean architecture style. The project separates application startup, domain concepts, services, presentation code, styling, resources, and tests so each area can evolve independently.
+YouTube Downloader Pro follows a modular clean architecture style. The project separates application startup, domain concepts, services, presentation code, styling, resources, packaging, and tests so each area can evolve independently.
 
 ## Structure
 
@@ -75,8 +75,7 @@ YouTubeDownloaderPro/
 - `PlaylistMetadata` and `PlaylistVideo` model playlist analysis results.
 - `PlaylistMetadataService` extracts playlist data through `yt-dlp --dump-single-json`.
 - `PlaylistWorker` runs playlist analysis on a `QThread`.
-- `PlaylistDialog` lets the user search, select, deselect, and confirm playlist videos.
-- Selected playlist videos are added to the queue as ready metadata-backed items.
+- Playlist entries are added to the queue as ready metadata-backed items.
 - Playlist dependency and extraction errors are reported through the existing log and status widgets.
 
 ## Sprint 5 Downloads
@@ -104,7 +103,18 @@ YouTubeDownloaderPro/
 - `scripts/build_windows.ps1` builds the executable and validates the expected output path.
 - `resources/version_info.txt` provides Windows version metadata for the packaged executable.
 - `resources/icons/app_icon.svg` is loaded through `ResourceManager` during application startup.
-- `RELEASE.md` documents release requirements, build steps, and validation commands for v0.1.0.
+- `RELEASE.md` documents release requirements, build steps, and validation commands for v0.2.0.
+
+## v0.2.0 Improvements
+
+- The application always applies `styles/dark_theme.qss`; the legacy settings `theme` field is preserved only for compatibility and normalized to `dark`.
+- `BackgroundWidget` paints an optional user-selected background image with a dark overlay while storing only the selected file path.
+- `PlaylistStreamService` streams playlist and YouTube Mix entries incrementally through `yt-dlp --flat-playlist --dump-json`.
+- `PlaylistStreamService` enforces the configured playlist limit before huge mixes can overload the UI.
+- `PlaylistWorker` emits progress and batch signals from a `QThread`, keeping playlist processing outside the UI thread.
+- `MainWindow` adds playlist videos to the queue in small batches and defers queue persistence until streaming completes.
+- Dependency availability remains checked internally, but missing tools are reported through log/status instead of a fixed sidebar panel.
+- PyInstaller runtime path resolution uses `_MEIPASS` so packaged resources and styles load correctly.
 
 ## Engineering Standards
 

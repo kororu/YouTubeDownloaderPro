@@ -33,7 +33,7 @@ def resolve_project_root() -> Path:
         Project root for source execution or PyInstaller runtime root.
     """
     if bool(getattr(sys, "frozen", False)):
-        return Path(sys.executable).resolve().parent
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent)).resolve()
     return Path(__file__).resolve().parents[1]
 
 

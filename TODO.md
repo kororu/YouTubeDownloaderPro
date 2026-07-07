@@ -84,4 +84,4 @@
 
 ## Next
 
-- v0.1.0 release is ready for manual Git commit and packaging validation.
+- Validate v0.2.0 with large playlist and YouTube Mix URLs before manual release commit.

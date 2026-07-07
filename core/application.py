@@ -15,6 +15,7 @@ from config.settings import Settings
 from config.settings_manager import SettingsManager
 from core.logger import configure_logging
 from resources.resource_manager import ResourceManager
+from styles.theme_manager import DARK_THEME
 from styles.theme_manager import ThemeManager
 from ui.main_window import MainWindow
 
@@ -82,12 +83,12 @@ class Application:
         """Apply the configured application theme."""
         theme_applied: bool = self._theme_manager.apply_theme(
             self._qt_application,
-            self._settings.theme,
+            DARK_THEME,
         )
         if theme_applied:
-            self._logger.info("Theme applied: %s.", self._settings.theme)
+            self._logger.info("Theme applied: %s.", DARK_THEME)
             return
-        self._logger.warning("Theme could not be applied: %s.", self._settings.theme)
+        self._logger.warning("Theme could not be applied: %s.", DARK_THEME)
 
     def __enter__(self) -> "Application":
         """Enter the application context.

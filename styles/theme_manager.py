@@ -10,15 +10,13 @@ from PySide6.QtWidgets import QApplication
 from core.paths import AppPaths, get_app_paths
 
 DARK_THEME: Final[str] = "dark"
-LIGHT_THEME: Final[str] = "light"
 
 
 class ThemeManager:
-    """Loads and applies application themes."""
+    """Loads and applies the permanent application dark theme."""
 
     _theme_files: dict[str, str] = {
         DARK_THEME: "dark_theme.qss",
-        LIGHT_THEME: "light_theme.qss",
     }
 
     def __init__(self, app_paths: AppPaths | None = None) -> None:
@@ -30,16 +28,16 @@ class ThemeManager:
         self._app_paths: AppPaths = app_paths or get_app_paths()
 
     def apply_theme(self, application: QApplication, theme_name: str = DARK_THEME) -> bool:
-        """Apply a theme to a Qt application.
+        """Apply the dark theme to a Qt application.
 
         Args:
             application: Qt application instance.
-            theme_name: Theme name to apply.
+            theme_name: Theme name kept for backward compatibility.
 
         Returns:
             True when the theme was loaded and applied; otherwise False.
         """
-        stylesheet: str | None = self.load_stylesheet(theme_name)
+        stylesheet: str | None = self.load_stylesheet(DARK_THEME)
         if stylesheet is None:
             application.setStyleSheet("")
             return False
@@ -48,15 +46,15 @@ class ThemeManager:
         return True
 
     def load_stylesheet(self, theme_name: str = DARK_THEME) -> str | None:
-        """Load stylesheet text for a theme.
+        """Load stylesheet text for the dark theme.
 
         Args:
-            theme_name: Theme name to load.
+            theme_name: Theme name kept for backward compatibility.
 
         Returns:
             QSS text when the file exists; otherwise None.
         """
-        theme_file_name: str | None = self._theme_files.get(theme_name)
+        theme_file_name: str | None = self._theme_files.get(DARK_THEME)
         if theme_file_name is None:
             return None
 

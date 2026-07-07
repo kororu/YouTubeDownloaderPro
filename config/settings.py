@@ -15,7 +15,9 @@ class Settings:
         output_folder: Default folder used for downloaded files.
         selected_format: Preferred media format.
         selected_quality: Preferred video quality.
-        theme: Active visual theme name.
+        theme: Active visual theme name, forced to dark for compatibility.
+        background_image_path: Optional custom application background image path.
+        max_playlist_items: Maximum playlist or YouTube Mix videos processed per request.
         window_width: Main window width in pixels.
         window_height: Main window height in pixels.
         window_x: Main window horizontal screen position.
@@ -27,6 +29,8 @@ class Settings:
     selected_format: str
     selected_quality: str
     theme: str
+    background_image_path: str
+    max_playlist_items: int
     window_width: int
     window_height: int
     window_x: int
@@ -45,6 +49,8 @@ class Settings:
             selected_format="mp4",
             selected_quality="best",
             theme="dark",
+            background_image_path="",
+            max_playlist_items=200,
             window_width=1400,
             window_height=900,
             window_x=100,
@@ -77,7 +83,9 @@ class Settings:
                 defaults.selected_quality,
                 ("480", "720", "1080", "1440", "2160", "best"),
             ),
-            theme=_read_choice(data, "theme", defaults.theme, ("dark", "light")),
+            theme="dark",
+            background_image_path=_read_background_image_path(data, defaults.background_image_path),
+            max_playlist_items=_read_playlist_limit(data, defaults.max_playlist_items),
             window_width=_read_int(data, "window_width", defaults.window_width, 1100, 10000),
             window_height=_read_int(data, "window_height", defaults.window_height, 700, 10000),
             window_x=_read_int(data, "window_x", defaults.window_x, -10000, 10000),
@@ -124,7 +132,8 @@ class Settings:
         output_folder: str,
         selected_format: str,
         selected_quality: str,
-        theme: str,
+        background_image_path: str,
+        max_playlist_items: int,
         max_concurrent_downloads: int,
     ) -> Self:
         """Create settings with updated user preferences.
@@ -133,19 +142,23 @@ class Settings:
             output_folder: Preferred output folder.
             selected_format: Preferred media format.
             selected_quality: Preferred media quality.
-            theme: Preferred visual theme.
+            background_image_path: Optional custom application background image path.
+            max_playlist_items: Maximum playlist or YouTube Mix videos processed per request.
             max_concurrent_downloads: Maximum simultaneous downloads.
 
         Returns:
             Updated settings instance.
         """
         normalized_output_folder: str = str(Path(output_folder.strip()).expanduser())
+        normalized_background_image_path: str = _normalize_background_image_path(background_image_path)
         return replace(
             self,
             output_folder=normalized_output_folder,
             selected_format=selected_format,
             selected_quality=selected_quality,
-            theme=theme,
+            theme="dark",
+            background_image_path=normalized_background_image_path,
+            max_playlist_items=_normalize_playlist_limit(max_playlist_items),
             max_concurrent_downloads=max(1, min(3, max_concurrent_downloads)),
         )
 
@@ -169,6 +182,39 @@ def _read_choice(
     if value in allowed_values:
         return value
     return default
+
+
+def _read_background_image_path(data: dict[str, Any], default: str) -> str:
+    """Read a valid optional background image path."""
+    value: str = _read_string(data, "background_image_path", default)
+    return _normalize_background_image_path(value)
+
+
+def _normalize_background_image_path(value: str) -> str:
+    """Normalize a background image path when it uses a supported image format."""
+    normalized_value: str = value.strip()
+    if not normalized_value:
+        return ""
+
+    path: Path = Path(normalized_value).expanduser()
+    if path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp"}:
+        return ""
+    return str(path)
+
+
+def _read_playlist_limit(data: dict[str, Any], default: int) -> int:
+    """Read a safe playlist item limit."""
+    value: Any = data.get("max_playlist_items")
+    if isinstance(value, int):
+        return _normalize_playlist_limit(value)
+    return default
+
+
+def _normalize_playlist_limit(value: int) -> int:
+    """Normalize playlist limits to supported values."""
+    if value in {0, 50, 100, 200, 500}:
+        return value
+    return 200
 
 
 def _read_int(

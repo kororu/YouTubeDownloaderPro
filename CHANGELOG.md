@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.2.0 - 2026-07-07
+
+- Updated visible application version and release metadata to v0.2.0.
+- Forced permanent dark mode and removed the light theme selector from settings.
+- Fixed style and resource path resolution for PyInstaller runtime.
+- Added optional persisted background image support with dark readability overlay.
+- Added incremental playlist and YouTube Mix loading through yt-dlp JSON line streaming.
+- Added playlist progress logging and progressive queue insertion for large playlists.
+- Added safe playlist cancellation through the existing cancel-all flow.
+- Improved background image visibility with darker translucent overlays and readable controls.
+- Removed the permanent visual dependency panel from the main sidebar.
+- Added persisted playlist and YouTube Mix item limits with a default of 200 videos.
+- Added batch-based playlist queue insertion to reduce UI pressure on large mixes.
+- Added safer logs for large playlist detection, configured limits, cancellation, and limit stops.
+
 ## v0.1.0 - 2026-07-07
 
 - Created the initial project scaffold.

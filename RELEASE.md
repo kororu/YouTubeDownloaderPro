@@ -3,7 +3,7 @@
 ## Version
 
 - Product: YouTube Downloader Pro
-- Version: 0.1.0
+- Version: 0.2.0
 - Platform: Windows
 - Package target: PyInstaller executable
 
@@ -43,4 +43,4 @@ python -m compileall app.py config core models services resources ui widgets dia
 git status --short
 ```
 
-Confirm that the application starts, dependency warnings are visible when tools are missing, settings persist, queue persistence works, and downloads use user-installed `yt-dlp` and `ffmpeg`.
+Confirm that the application starts with the dark theme, dependency warnings are visible when tools are missing, optional background images can be selected and cleared, playlist and YouTube Mix URLs load progressively, settings persist, queue persistence works, and downloads use user-installed `yt-dlp` and `ffmpeg`.

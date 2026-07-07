@@ -121,6 +121,12 @@ def _read_entry_url(entry: dict[str, Any]) -> str | None:
         value: Any = entry.get(key)
         if isinstance(value, str) and value.startswith(("http://", "https://")):
             return value.strip()
+        if isinstance(value, str) and value.startswith("/watch?"):
+            return f"https://www.youtube.com{value.strip()}"
+
+    video_id: Any = entry.get("id")
+    if isinstance(video_id, str) and video_id.strip():
+        return f"https://www.youtube.com/watch?v={video_id.strip()}"
     return None
 
 

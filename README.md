@@ -2,7 +2,7 @@
 
 YouTube Downloader Pro is a Windows desktop frontend for `yt-dlp` and `ffmpeg`, built with Python 3.12 and PySide6.
 
-Version `0.1.0` contains infrastructure, interface, metadata loading, playlist support, download execution, queue persistence, polish improvements, and Windows release packaging with PyInstaller.
+Version `0.2.0` contains infrastructure, interface, metadata loading, progressive playlist and YouTube Mix loading, download execution, queue persistence, permanent dark mode, optional background image support, polish improvements, and Windows release packaging with PyInstaller.
 
 ## Requirements
 
@@ -19,6 +19,14 @@ Install external tools on Windows:
 winget install --id yt-dlp.yt-dlp --exact
 winget install --id Gyan.FFmpeg --exact
 ```
+
+If available in your checkout, run the helper script:
+
+```powershell
+.\install_dependencies.bat
+```
+
+The application verifies dependencies internally and reports missing tools in the log/status area without showing a permanent dependency panel.
 
 ## Development Setup
 
@@ -49,6 +57,16 @@ Start the application:
 python app.py
 ```
 
+## Playlist and YouTube Mix Loading
+
+Use the playlist action with a standard playlist URL or a YouTube Mix URL, including URLs with `list=RD` or `start_radio=1`. Videos are added to the queue progressively while progress is shown in the log.
+
+The default playlist and YouTube Mix limit is `200` videos to keep the interface responsive with large lists. Change `Límite playlist` in Settings to `50`, `100`, `200`, `500`, or `Sin límite`. Avoid `Sin límite` for very large mixes unless you explicitly accept the performance risk.
+
+## Appearance
+
+The application always runs in dark mode. A custom background image can be selected from settings using `png`, `jpg`, `jpeg`, or `webp`; only the selected path is saved. Main panels use subtle transparency when a background image is active while controls remain readable.
+
 ## Build
 
 Create the Windows release build:
@@ -61,4 +79,4 @@ Release build details are documented in `RELEASE.md`.
 
 ## Project Status
 
-Version `0.1.0` establishes the complete first release: repository structure, application infrastructure, settings persistence, queue persistence, dependency verification, resource resolution, logging, theme management, polished UI foundation, playlist selection, download execution flow, and Windows packaging assets.
+Version `0.2.0` improves the first release with permanent dark mode, PyInstaller-safe style/resource loading, optional background images, and incremental playlist and YouTube Mix loading for large lists.
