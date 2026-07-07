@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import sys
-from types import TracebackType
 from logging import Logger
+from pathlib import Path
+from types import TracebackType
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from config.app_config import AppConfig
 from config.settings import Settings
 from config.settings_manager import SettingsManager
 from core.logger import configure_logging
+from resources.resource_manager import ResourceManager
 from styles.theme_manager import ThemeManager
 from ui.main_window import MainWindow
 
@@ -32,9 +35,11 @@ class Application:
         self._settings_manager: SettingsManager = SettingsManager()
         self._settings: Settings = self._settings_manager.load()
         self._qt_application: QApplication = QApplication(argv or sys.argv)
+        self._resource_manager: ResourceManager = ResourceManager()
         self._theme_manager: ThemeManager = ThemeManager()
         self._main_window: MainWindow | None = None
         self._configure_metadata()
+        self._apply_icon()
         self._apply_theme()
 
     def run(self) -> int:
@@ -63,6 +68,15 @@ class Application:
             self._config.application_version,
             self._config.organization_name,
         )
+
+    def _apply_icon(self) -> None:
+        """Apply the application icon when the asset is available."""
+        icon_path: Path | None = self._resource_manager.resolve_icon("app_icon.svg")
+        if icon_path is None:
+            self._logger.warning("Application icon could not be found.")
+            return
+        self._qt_application.setWindowIcon(QIcon(str(icon_path)))
+        self._logger.info("Application icon applied.")
 
     def _apply_theme(self) -> None:
         """Apply the configured application theme."""

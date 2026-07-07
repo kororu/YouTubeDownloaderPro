@@ -2,7 +2,7 @@
 
 YouTube Downloader Pro is a Windows desktop frontend for `yt-dlp` and `ffmpeg`, built with Python 3.12 and PySide6.
 
-The current version contains infrastructure, interface, metadata loading, playlist support, download execution, and Sprint 6 polish: queue persistence, settings resilience, clearer error messages, improved empty states, keyboard shortcuts, visual refinements, and log export.
+Version `0.1.0` contains infrastructure, interface, metadata loading, playlist support, download execution, queue persistence, polish improvements, and Windows release packaging with PyInstaller.
 
 ## Requirements
 
@@ -35,6 +35,12 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
+Install PyInstaller in the active environment when building the Windows executable:
+
+```powershell
+pip install pyinstaller
+```
+
 ## Run
 
 Start the application:
@@ -43,6 +49,16 @@ Start the application:
 python app.py
 ```
 
+## Build
+
+Create the Windows release build:
+
+```powershell
+.\scripts\build_windows.ps1 -Clean
+```
+
+Release build details are documented in `RELEASE.md`.
+
 ## Project Status
 
-Version `0.1.0` establishes the repository structure, application infrastructure, settings persistence, queue persistence, dependency verification, resource resolution, logging, theme management, polished UI foundation, playlist selection, and download execution flow.
+Version `0.1.0` establishes the complete first release: repository structure, application infrastructure, settings persistence, queue persistence, dependency verification, resource resolution, logging, theme management, polished UI foundation, playlist selection, download execution flow, and Windows packaging assets.

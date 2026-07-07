@@ -24,6 +24,7 @@ pip-wheel-metadata/
 
 # PyInstaller
 *.spec
+!YouTubeDownloaderPro.spec
 *.manifest
 *.toc
 *.pkg

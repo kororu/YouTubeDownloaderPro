@@ -98,6 +98,14 @@ YouTubeDownloaderPro/
 - Empty queue state, menu styling, queue item progress, and error styling are refined in QSS.
 - `LogWidget` can export the visible session log to a text file.
 
+## Sprint 7 Release
+
+- `YouTubeDownloaderPro.spec` defines the PyInstaller Windows package and includes styles and resources.
+- `scripts/build_windows.ps1` builds the executable and validates the expected output path.
+- `resources/version_info.txt` provides Windows version metadata for the packaged executable.
+- `resources/icons/app_icon.svg` is loaded through `ResourceManager` during application startup.
+- `RELEASE.md` documents release requirements, build steps, and validation commands for v0.1.0.
+
 ## Engineering Standards
 
 - Python 3.12+ is the supported runtime.

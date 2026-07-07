@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="YouTube Downloader Pro icon">
+  <rect width="256" height="256" rx="48" fill="#1f2328"/>
+  <rect x="36" y="54" width="184" height="112" rx="28" fill="#ff3333"/>
+  <path d="M112 86 L112 134 L154 110 Z" fill="#ffffff"/>
+  <path d="M128 178 L128 220" stroke="#58a6ff" stroke-width="16" stroke-linecap="round"/>
+  <path d="M96 194 L128 226 L160 194" fill="none" stroke="#58a6ff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

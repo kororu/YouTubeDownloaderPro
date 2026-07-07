@@ -72,6 +72,16 @@
 - Complete Commit 055 - Log export.
 - Complete Commit 056 - Sprint 6 stabilization.
 
+## Sprint 7
+
+- Complete Commit 057 - PyInstaller spec.
+- Complete Commit 058 - Build script.
+- Complete Commit 059 - Version metadata.
+- Complete Commit 060 - App icon support.
+- Complete Commit 061 - Release README.
+- Complete Commit 062 - Final validation.
+- Complete Commit 063 - v0.1.0 release.
+
 ## Next
 
-- Commit 057 - PyInstaller spec.
+- v0.1.0 release is ready for manual Git commit and packaging validation.

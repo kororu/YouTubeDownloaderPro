@@ -43,3 +43,9 @@ All notable changes to this project will be documented in this file.
 - Added keyboard shortcuts for queue and log actions.
 - Added visible log export.
 - Stabilized Sprint 6 documentation and UI behavior.
+- Added PyInstaller packaging specification for the Windows executable.
+- Added Windows build automation script.
+- Added Windows version metadata for release builds.
+- Added application icon asset and startup icon loading.
+- Added release documentation for building and validating v0.1.0.
+- Completed the v0.1.0 release preparation.
