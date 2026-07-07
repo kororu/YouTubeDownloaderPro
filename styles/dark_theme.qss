@@ -1,0 +1,14 @@
+QWidget {
+    background-color: #1f2328;
+    color: #f0f3f6;
+    font-family: "Segoe UI", "Inter", sans-serif;
+    font-size: 10pt;
+}
+
+QMainWindow {
+    background-color: #1f2328;
+}
+
+QWidget#mainContentArea {
+    background-color: #24292f;
+}

@@ -1,22 +1,20 @@
-"""Application entry point for YouTube Downloader Pro."""
+"""Desktop application entry point."""
 
 from __future__ import annotations
 
 import sys
 
-from PySide6.QtWidgets import QApplication
+from core.application import Application
 
 
 def main() -> int:
-    """Start the Qt application.
+    """Start YouTube Downloader Pro.
 
     Returns:
         The process exit code returned by the Qt event loop.
     """
-    app: QApplication = QApplication(sys.argv)
-    app.setApplicationName("YouTube Downloader Pro")
-    app.setOrganizationName("YouTube Downloader Pro")
-    return app.exec()
+    with Application(sys.argv) as application:
+        return application.run()
 
 
 if __name__ == "__main__":
