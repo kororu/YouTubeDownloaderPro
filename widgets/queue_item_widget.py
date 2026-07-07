@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from uuid import uuid4
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QCheckBox, QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+
+from models.download_enums import DownloadStatus
+from models.download_item import DownloadItem
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,25 +28,35 @@ class QueueItemData:
     media_format: str
     quality: str
     status: str
+    title: str | None = None
+    uploader: str | None = None
+    error_message: str | None = None
 
     @classmethod
-    def create(cls, source_url: str, media_format: str, quality: str) -> "QueueItemData":
-        """Create queue item data for a submitted URL.
+    def from_download_item(cls, download_item: DownloadItem) -> "QueueItemData":
+        """Create queue item data from a domain model.
 
         Args:
-            source_url: Source video or playlist URL.
-            media_format: Selected output format.
-            quality: Selected output quality.
+            download_item: Domain queue item.
 
         Returns:
-            Queue item data with a stable generated identifier.
+            Queue item display data.
         """
+        metadata_title: str | None = None
+        metadata_uploader: str | None = None
+        if download_item.metadata is not None:
+            metadata_title = download_item.metadata.title
+            metadata_uploader = download_item.metadata.uploader
+
         return cls(
-            item_id=str(uuid4()),
-            source_url=source_url,
-            media_format=media_format,
-            quality=quality,
-            status="Pendiente",
+            item_id=download_item.item_id,
+            source_url=download_item.source_url,
+            media_format=download_item.media_format.value,
+            quality=download_item.quality.value,
+            status=_translate_status(download_item.status),
+            title=metadata_title,
+            uploader=metadata_uploader,
+            error_message=download_item.error_message,
         )
 
 
@@ -64,6 +76,10 @@ class QueueItemWidget(QFrame):
         super().__init__(parent)
         self._item_data: QueueItemData = item_data
         self._checkbox: QCheckBox
+        self._title_label: QLabel
+        self._url_label: QLabel
+        self._metadata_label: QLabel
+        self._error_label: QLabel
         self.setObjectName("queueItemWidget")
         self._build_layout()
 
@@ -76,6 +92,16 @@ class QueueItemWidget(QFrame):
     def source_url(self) -> str:
         """Return the queue item source URL."""
         return self._item_data.source_url
+
+    @property
+    def media_format(self) -> str:
+        """Return the selected media format."""
+        return self._item_data.media_format
+
+    @property
+    def quality(self) -> str:
+        """Return the selected quality."""
+        return self._item_data.quality
 
     def is_selected(self) -> bool:
         """Return whether the item is selected."""
@@ -105,9 +131,20 @@ class QueueItemWidget(QFrame):
             f"{self._item_data.source_url} "
             f"{self._item_data.media_format} "
             f"{self._item_data.quality} "
-            f"{self._item_data.status}"
+            f"{self._item_data.status} "
+            f"{self._item_data.title or ''} "
+            f"{self._item_data.uploader or ''}"
         ).lower()
         return normalized_search in searchable_text
+
+    def update_item(self, item_data: QueueItemData) -> None:
+        """Update the displayed item data.
+
+        Args:
+            item_data: Updated item data.
+        """
+        self._item_data = item_data
+        self._refresh_labels()
 
     def _build_layout(self) -> None:
         """Build the queue item layout."""
@@ -121,22 +158,25 @@ class QueueItemWidget(QFrame):
         text_layout: QVBoxLayout = QVBoxLayout()
         text_layout.setSpacing(4)
 
-        url_label: QLabel = QLabel(self._item_data.source_url, self)
-        url_label.setObjectName("queueItemUrl")
-        url_label.setWordWrap(True)
+        self._title_label = QLabel(self)
+        self._title_label.setObjectName("queueItemTitle")
+        self._title_label.setWordWrap(True)
 
-        metadata_label: QLabel = QLabel(
-            (
-                f"Formato: {self._item_data.media_format.upper()} | "
-                f"Calidad: {self._item_data.quality} | "
-                f"Estado: {self._item_data.status}"
-            ),
-            self,
-        )
-        metadata_label.setObjectName("queueItemMetadata")
+        self._url_label = QLabel(self)
+        self._url_label.setObjectName("queueItemUrl")
+        self._url_label.setWordWrap(True)
 
-        text_layout.addWidget(url_label)
-        text_layout.addWidget(metadata_label)
+        self._metadata_label = QLabel(self)
+        self._metadata_label.setObjectName("queueItemMetadata")
+
+        self._error_label = QLabel(self)
+        self._error_label.setObjectName("queueItemError")
+        self._error_label.setWordWrap(True)
+
+        text_layout.addWidget(self._title_label)
+        text_layout.addWidget(self._url_label)
+        text_layout.addWidget(self._metadata_label)
+        text_layout.addWidget(self._error_label)
 
         remove_button: QPushButton = QPushButton("Quitar", self)
         remove_button.clicked.connect(self._emit_remove_requested)
@@ -144,6 +184,7 @@ class QueueItemWidget(QFrame):
         layout.addWidget(self._checkbox)
         layout.addLayout(text_layout, 1)
         layout.addWidget(remove_button)
+        self._refresh_labels()
 
     def _emit_selection_changed(self, selected: bool) -> None:
         """Emit item selection state."""
@@ -152,3 +193,30 @@ class QueueItemWidget(QFrame):
     def _emit_remove_requested(self) -> None:
         """Emit item removal request."""
         self.remove_requested.emit(self.item_id)
+
+    def _refresh_labels(self) -> None:
+        """Refresh displayed labels from current item data."""
+        display_title: str = self._item_data.title or "Cargando metadatos..."
+        self._title_label.setText(display_title)
+        self._url_label.setText(self._item_data.source_url)
+        self._metadata_label.setText(
+            (
+                f"Formato: {self._item_data.media_format.upper()} | "
+                f"Calidad: {self._item_data.quality} | "
+                f"Estado: {self._item_data.status}"
+            )
+        )
+        error_message: str = self._item_data.error_message or ""
+        self._error_label.setText(error_message)
+        self._error_label.setVisible(bool(error_message))
+
+
+def _translate_status(status: DownloadStatus) -> str:
+    """Translate a domain status to display text."""
+    status_labels: dict[DownloadStatus, str] = {
+        DownloadStatus.PENDING: "Pendiente",
+        DownloadStatus.LOADING_METADATA: "Cargando metadatos",
+        DownloadStatus.READY: "Listo",
+        DownloadStatus.FAILED: "Error",
+    }
+    return status_labels[status]

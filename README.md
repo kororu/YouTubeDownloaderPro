@@ -2,7 +2,7 @@
 
 YouTube Downloader Pro is a Windows desktop frontend for `yt-dlp` and `ffmpeg`, built with Python 3.12 and PySide6.
 
-The current version contains the Sprint 1 infrastructure: application bootstrap, typed settings, safe paths, dependency checks, centralized theme loading, rotating logs, resource resolution, and the base main window shell. Download functionality is not implemented yet.
+The current version contains the Sprint 1 infrastructure, Sprint 2 interface foundation, and Sprint 3 metadata engine foundation: application bootstrap, typed settings, safe paths, dependency checks, centralized theme loading, rotating logs, resource resolution, a professional main window shell, queue interactions, settings panel, status area, log panel, about dialog, yt-dlp command generation, subprocess execution, URL validation, and asynchronous metadata loading. Download execution is not implemented yet.
 
 ## Requirements
 
@@ -45,4 +45,4 @@ python app.py
 
 ## Project Status
 
-Version `0.1.0` establishes the repository structure, application infrastructure, settings persistence, dependency verification, resource resolution, logging, theme management, and a base UI shell. Download workflows will be added in later milestones.
+Version `0.1.0` establishes the repository structure, application infrastructure, settings persistence, dependency verification, resource resolution, logging, theme management, Sprint 2 UI foundation, and Sprint 3 metadata foundation. Download workflows will be added in later milestones.

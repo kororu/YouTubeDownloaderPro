@@ -15,7 +15,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from models.download_enums import DownloadFormat, DownloadQuality, DownloadStatus
 from widgets.queue_item_widget import QueueItemData, QueueItemWidget
+from models.download_item import DownloadItem
+from models.video_metadata import VideoMetadata
 
 
 class QueueWidget(QWidget):
@@ -40,15 +43,13 @@ class QueueWidget(QWidget):
         self._sort_combo_box: QComboBox
         self._build_layout()
 
-    def add_item(self, source_url: str, media_format: str, quality: str) -> None:
-        """Add a URL to the visible queue.
+    def add_download_item(self, download_item: DownloadItem) -> None:
+        """Add a domain item to the visible queue.
 
         Args:
-            source_url: Source video or playlist URL.
-            media_format: Selected output format.
-            quality: Selected output quality.
+            download_item: Domain queue item.
         """
-        item_data: QueueItemData = QueueItemData.create(source_url, media_format, quality)
+        item_data: QueueItemData = QueueItemData.from_download_item(download_item)
         item_widget: QueueItemWidget = QueueItemWidget(item_data, self._items_container)
         item_widget.selection_changed.connect(self._emit_queue_changed)
         item_widget.remove_requested.connect(self.remove_item)
@@ -60,6 +61,65 @@ class QueueWidget(QWidget):
         self._apply_sorting()
         self._apply_filter()
         self._emit_queue_changed()
+
+    def add_item(self, source_url: str, media_format: str, quality: str) -> None:
+        """Add a URL to the visible queue.
+
+        Args:
+            source_url: Source video or playlist URL.
+            media_format: Selected output format.
+            quality: Selected output quality.
+        """
+        download_item: DownloadItem = DownloadItem.create(
+            source_url=source_url,
+            media_format=DownloadFormat(media_format),
+            quality=DownloadQuality(quality),
+        )
+        self.add_download_item(download_item)
+
+    def update_item_metadata(self, item_id: str, metadata: VideoMetadata) -> None:
+        """Update queue item metadata.
+
+        Args:
+            item_id: Queue item identifier.
+            metadata: Loaded video metadata.
+        """
+        item_widget: QueueItemWidget | None = self._find_item(item_id)
+        if item_widget is None:
+            return
+
+        updated_item: DownloadItem = DownloadItem(
+            item_id=item_id,
+            source_url=item_widget.source_url,
+            media_format=DownloadFormat(item_widget.media_format),
+            quality=DownloadQuality(item_widget.quality),
+            status=DownloadStatus.READY,
+            metadata=metadata,
+        )
+        item_widget.update_item(QueueItemData.from_download_item(updated_item))
+        self._apply_filter()
+
+    def mark_item_failed(self, item_id: str, error_message: str) -> None:
+        """Mark a queue item as failed.
+
+        Args:
+            item_id: Queue item identifier.
+            error_message: Failure message.
+        """
+        item_widget: QueueItemWidget | None = self._find_item(item_id)
+        if item_widget is None:
+            return
+
+        failed_item: DownloadItem = DownloadItem(
+            item_id=item_id,
+            source_url=item_widget.source_url,
+            media_format=DownloadFormat(item_widget.media_format),
+            quality=DownloadQuality(item_widget.quality),
+            status=DownloadStatus.FAILED,
+            error_message=error_message,
+        )
+        item_widget.update_item(QueueItemData.from_download_item(failed_item))
+        self._apply_filter()
 
     def remove_item(self, item_id: str) -> None:
         """Remove an item by identifier.

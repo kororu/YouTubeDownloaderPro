@@ -48,6 +48,11 @@ class SettingsWidget(QWidget):
             settings: Latest persisted settings.
         """
         self._settings = settings
+        self._output_folder_input.setText(settings.output_folder)
+        self._format_combo_box.setCurrentText(settings.selected_format)
+        self._quality_combo_box.setCurrentText(settings.selected_quality)
+        self._theme_combo_box.setCurrentText(settings.theme)
+        self._max_downloads_spin_box.setValue(settings.max_concurrent_downloads)
 
     def _build_layout(self) -> None:
         """Build settings controls."""

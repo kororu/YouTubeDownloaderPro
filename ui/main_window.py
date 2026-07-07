@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from PySide6.QtGui import QCloseEvent
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QCloseEvent
 from PySide6.QtWidgets import QMainWindow, QSplitter, QVBoxLayout, QWidget
 
 from config.app_config import AppConfig
@@ -12,6 +11,11 @@ from config.settings import Settings
 from config.settings_manager import SettingsManager
 from core.dependency_checker import DependencyChecker, DependencyCheckResult
 from dialogs.about_dialog import AboutDialog
+from models.download_enums import DownloadFormat, DownloadQuality
+from models.download_item import DownloadItem
+from models.video_metadata import VideoMetadata
+from services.metadata_worker import MetadataWorker
+from services.url_validator import UrlValidationResult, UrlValidator
 from widgets.dependency_notice_widget import DependencyNoticeWidget
 from widgets.footer_widget import FooterWidget
 from widgets.log_widget import LogWidget
@@ -42,6 +46,8 @@ class MainWindow(QMainWindow):
         self._settings: Settings = settings
         self._settings_manager: SettingsManager = settings_manager
         self._dependency_result: DependencyCheckResult = DependencyChecker().check()
+        self._url_validator: UrlValidator = UrlValidator()
+        self._metadata_workers: dict[str, MetadataWorker] = {}
         self._toolbar_widget: ToolbarWidget
         self._queue_widget: QueueWidget
         self._log_widget: LogWidget
@@ -143,20 +149,89 @@ class MainWindow(QMainWindow):
         self._status_widget.update_dependency_status(self._dependency_result.all_available)
 
     def _add_video_to_queue(self, source_url: str, media_format: str, quality: str) -> None:
-        """Add a video URL to the queue view."""
-        self._queue_widget.add_item(source_url, media_format, quality)
-        self._log_widget.append_info(f"Video agregado a la cola: {source_url}")
-        self._status_widget.set_status_message("video agregado")
+        """Validate a video URL and load metadata."""
+        validation_result: UrlValidationResult = self._url_validator.validate(source_url)
+        if not validation_result.is_valid or validation_result.normalized_url is None:
+            self._show_input_error(validation_result.error_message or "URL inválida.")
+            return
+
+        download_item: DownloadItem | None = self._create_download_item(
+            validation_result.normalized_url,
+            media_format,
+            quality,
+        )
+        if download_item is None:
+            return
+
+        self._queue_widget.add_download_item(download_item)
+        self._log_widget.append_info(f"Cargando metadatos: {download_item.source_url}")
+        self._status_widget.set_status_message("cargando metadatos")
+        self._start_metadata_worker(download_item)
 
     def _add_playlist_to_queue(self, source_url: str, media_format: str, quality: str) -> None:
-        """Add a playlist URL to the queue view."""
-        self._queue_widget.add_item(source_url, media_format, quality)
-        self._log_widget.append_info(f"Playlist agregada a la cola: {source_url}")
-        self._status_widget.set_status_message("playlist agregada")
+        """Validate playlist URL and report current support boundary."""
+        validation_result: UrlValidationResult = self._url_validator.validate(source_url)
+        if not validation_result.is_valid:
+            self._show_input_error(validation_result.error_message or "URL inválida.")
+            return
+        self._log_widget.append_warning("La selección de playlist se implementará en Sprint 4.")
+        self._status_widget.set_status_message("playlist pendiente de Sprint 4")
 
     def _handle_queue_changed(self, total_items: int, selected_items: int) -> None:
         """Update status when queue selection changes."""
         self._status_widget.update_queue_status(total_items, selected_items)
+
+    def _create_download_item(
+        self,
+        source_url: str,
+        media_format: str,
+        quality: str,
+    ) -> DownloadItem | None:
+        """Create a validated domain download item."""
+        try:
+            return DownloadItem.create(
+                source_url=source_url,
+                media_format=DownloadFormat(media_format),
+                quality=DownloadQuality(quality),
+            )
+        except ValueError:
+            self._show_input_error("Formato o calidad no válidos.")
+            return None
+
+    def _start_metadata_worker(self, download_item: DownloadItem) -> None:
+        """Start asynchronous metadata loading for a queue item."""
+        worker: MetadataWorker = MetadataWorker(download_item.item_id, download_item.source_url)
+        worker.metadata_loaded.connect(self._handle_metadata_loaded)
+        worker.metadata_failed.connect(self._handle_metadata_failed)
+        worker.finished.connect(lambda item_id=download_item.item_id: self._remove_metadata_worker(item_id))
+        self._metadata_workers[download_item.item_id] = worker
+        worker.start()
+
+    def _handle_metadata_loaded(self, item_id: str, metadata: object) -> None:
+        """Handle successful metadata loading."""
+        if not isinstance(metadata, VideoMetadata):
+            self._handle_metadata_failed(item_id, "Respuesta de metadatos inválida.")
+            return
+        self._queue_widget.update_item_metadata(item_id, metadata)
+        self._log_widget.append_info(f"Metadatos cargados: {metadata.title}")
+        self._status_widget.set_status_message("metadatos cargados")
+
+    def _handle_metadata_failed(self, item_id: str, error_message: str) -> None:
+        """Handle metadata loading failure."""
+        self._queue_widget.mark_item_failed(item_id, error_message)
+        self._log_widget.append_error(error_message)
+        self._status_widget.set_status_message("error de metadatos")
+
+    def _remove_metadata_worker(self, item_id: str) -> None:
+        """Remove a finished metadata worker."""
+        worker: MetadataWorker | None = self._metadata_workers.pop(item_id, None)
+        if worker is not None:
+            worker.deleteLater()
+
+    def _show_input_error(self, message: str) -> None:
+        """Show validation feedback to the user."""
+        self._log_widget.append_error(message)
+        self._status_widget.set_status_message("entrada inválida")
 
     def _save_settings(self, settings: Settings) -> None:
         """Persist settings changed from the settings panel."""

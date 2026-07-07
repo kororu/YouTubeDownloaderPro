@@ -51,6 +51,25 @@ YouTubeDownloaderPro/
 - `ResourceManager` resolves optional icons, images, styles, and fonts without crashing when files are absent.
 - `MainWindow` provides the base shell and persists window geometry on close.
 
+## Sprint 2 Interface
+
+- `ToolbarWidget` provides URL entry, format and quality controls, and high-level actions.
+- `QueueWidget` uses `QScrollArea` with `QueueItemWidget` instances for queue display.
+- Queue interactions support add, remove, select all, deselect all, search, and sort operations without download execution.
+- `SettingsWidget` edits persisted user preferences through the configuration layer.
+- `LogWidget` and `StatusWidget` provide visible application feedback.
+- `AboutDialog` displays application metadata without coupling to download services.
+
+## Sprint 3 Metadata Engine
+
+- `models` contains download enums, queue item state, and extracted video metadata.
+- `YtDlpCommandBuilder` builds command arguments without executing them.
+- `SubprocessRunner` centralizes external command execution and output capture.
+- `VideoMetadataService` extracts single-video metadata through `yt-dlp --dump-single-json`.
+- `MetadataWorker` loads metadata on a `QThread` so the UI remains responsive.
+- `UrlValidator` validates user-entered URLs before service execution.
+- UI integration adds metadata-backed queue entries and reports dependency or extraction errors without starting downloads.
+
 ## Engineering Standards
 
 - Python 3.12+ is the supported runtime.

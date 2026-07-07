@@ -13,3 +13,14 @@ All notable changes to this project will be documented in this file.
 - Added path, environment, dependency, resource, theme, and logging infrastructure.
 - Added a base main window shell with toolbar, queue, log, status, footer, and dependency notice areas.
 - Added window size and position persistence.
+- Added toolbar controls for URL entry, format selection, quality selection, settings, and about actions.
+- Added queue item widgets, queue selection, removal, search, and sorting interactions.
+- Added settings, log, status, and about interface components.
+- Stabilized Sprint 2 documentation and UI integration.
+- Added download domain enums and queue item domain models.
+- Added yt-dlp command generation for metadata and future download commands.
+- Added subprocess runner foundation.
+- Added video metadata extraction service using yt-dlp JSON output.
+- Added QThread metadata worker infrastructure.
+- Added URL validation, error handling, and metadata loading integration.
+- Stabilized Sprint 3 documentation and imports.
