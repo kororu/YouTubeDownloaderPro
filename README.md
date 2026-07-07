@@ -1,8 +1,8 @@
 # YouTube Downloader Pro
 
-YouTube Downloader Pro is a desktop application foundation for a professional video download manager built with Python 3.12 and PySide6.
+YouTube Downloader Pro is a Windows desktop frontend for `yt-dlp` and `ffmpeg`, built with Python 3.12 and PySide6.
 
-This repository currently contains the application infrastructure, clean architecture modules, Qt application lifecycle, main window shell, and dark theme loading. Download functionality is not implemented yet.
+The current version contains the Sprint 1 infrastructure: application bootstrap, typed settings, safe paths, dependency checks, centralized theme loading, rotating logs, resource resolution, and the base main window shell. Download functionality is not implemented yet.
 
 ## Requirements
 
@@ -11,7 +11,7 @@ This repository currently contains the application infrastructure, clean archite
 - yt-dlp
 - FFmpeg
 
-## Setup
+## External Tools
 
 Install external tools on Windows:
 
@@ -19,6 +19,8 @@ Install external tools on Windows:
 winget install --id yt-dlp.yt-dlp --exact
 winget install --id Gyan.FFmpeg --exact
 ```
+
+## Development Setup
 
 Create and activate a virtual environment:
 
@@ -33,7 +35,9 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Run the application entry point:
+## Run
+
+Start the application:
 
 ```powershell
 python app.py
@@ -41,4 +45,4 @@ python app.py
 
 ## Project Status
 
-Version `0.1.0` establishes the repository structure, dependency baseline, application container, main window infrastructure, and bundled dark theme. Download workflows and feature widgets will be added in later milestones.
+Version `0.1.0` establishes the repository structure, application infrastructure, settings persistence, dependency verification, resource resolution, logging, theme management, and a base UI shell. Download workflows will be added in later milestones.

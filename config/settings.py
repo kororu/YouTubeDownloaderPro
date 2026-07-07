@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any, Self
 
@@ -98,6 +98,26 @@ class Settings:
             Dictionary representation of the settings.
         """
         return asdict(self)
+
+    def with_window_geometry(self, width: int, height: int, x_position: int, y_position: int) -> Self:
+        """Create settings with updated window geometry.
+
+        Args:
+            width: Window width in pixels.
+            height: Window height in pixels.
+            x_position: Window horizontal screen position.
+            y_position: Window vertical screen position.
+
+        Returns:
+            Updated settings instance.
+        """
+        return replace(
+            self,
+            window_width=max(1100, width),
+            window_height=max(700, height),
+            window_x=x_position,
+            window_y=y_position,
+        )
 
 
 def _read_string(data: dict[str, Any], key: str, default: str) -> str:

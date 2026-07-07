@@ -39,6 +39,7 @@ pip-wheel-metadata/
 *.log
 *.tmp
 *.temp
+logs/
 
 # Local configuration
 .env

@@ -11,6 +11,8 @@ YouTubeDownloaderPro/
     README.md
     CHANGELOG.md
     PROJECT.md
+    TODO.md
+    AGENTS.md
     .gitignore
     config/
     core/
@@ -27,18 +29,27 @@ YouTubeDownloaderPro/
 
 ## Layers
 
-- `app.py`: Starts the `QApplication` and owns process-level application bootstrapping.
-- `config`: Stores configuration modules and constants.
-- `core`: Contains core application rules, shared abstractions, and orchestration code.
+- `app.py`: Delegates process startup to the application container.
+- `config`: Stores typed application configuration and JSON-backed user settings.
+- `core`: Contains application lifecycle, constants, paths, environment detection, dependency checks, and logging.
 - `models`: Contains typed domain and data models.
 - `services`: Contains integrations and business services, such as future download, validation, metadata, and persistence services.
 - `ui`: Contains main windows, screens, and presentation composition.
-- `widgets`: Contains reusable PySide6 widgets.
+- `widgets`: Contains reusable PySide6 widgets for the main shell.
 - `dialogs`: Contains dialog windows and modal workflows.
-- `resources`: Contains application assets.
-- `styles`: Contains Qt style sheets and visual theme assets.
+- `resources`: Contains application assets and safe resource resolution helpers.
+- `styles`: Contains Qt style sheets and centralized theme management.
 - `downloads`: Provides the default local download target folder.
 - `tests`: Contains automated tests.
+
+## Sprint 1 Infrastructure
+
+- `Application` encapsulates `QApplication`, metadata, theme application, settings loading, logging, and main window startup.
+- `SettingsManager` persists user settings as JSON in the user configuration directory.
+- `DependencyChecker` verifies `yt-dlp` and `ffmpeg` availability through the system `PATH`.
+- `ThemeManager` centralizes QSS loading and applies the configured theme safely.
+- `ResourceManager` resolves optional icons, images, styles, and fonts without crashing when files are absent.
+- `MainWindow` provides the base shell and persists window geometry on close.
 
 ## Engineering Standards
 

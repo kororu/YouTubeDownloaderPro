@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -71,6 +72,23 @@ class SettingsManager:
         Args:
             settings: Settings instance to write.
         """
-        self._settings_file.parent.mkdir(parents=True, exist_ok=True)
+        self._ensure_settings_directory()
         serialized_settings: str = json.dumps(settings.to_dict(), indent=4, sort_keys=True)
         self._settings_file.write_text(f"{serialized_settings}\n", encoding="utf-8")
+
+    def _ensure_settings_directory(self) -> None:
+        """Create the settings directory or switch to a writable fallback."""
+        try:
+            self._settings_file.parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            self._settings_file = self._fallback_settings_file()
+            self._settings_file.parent.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def _fallback_settings_file() -> Path:
+        """Resolve a writable fallback settings file path.
+
+        Returns:
+            Settings file path inside the system temporary directory.
+        """
+        return Path(tempfile.gettempdir()) / APPLICATION_NAME.replace(" ", "") / "settings.json"
