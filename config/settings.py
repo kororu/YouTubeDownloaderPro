@@ -119,6 +119,35 @@ class Settings:
             window_y=y_position,
         )
 
+    def with_preferences(
+        self,
+        output_folder: str,
+        selected_format: str,
+        selected_quality: str,
+        theme: str,
+        max_concurrent_downloads: int,
+    ) -> Self:
+        """Create settings with updated user preferences.
+
+        Args:
+            output_folder: Preferred output folder.
+            selected_format: Preferred media format.
+            selected_quality: Preferred media quality.
+            theme: Preferred visual theme.
+            max_concurrent_downloads: Maximum simultaneous downloads.
+
+        Returns:
+            Updated settings instance.
+        """
+        return replace(
+            self,
+            output_folder=output_folder,
+            selected_format=selected_format,
+            selected_quality=selected_quality,
+            theme=theme,
+            max_concurrent_downloads=max(1, min(3, max_concurrent_downloads)),
+        )
+
 
 def _read_string(data: dict[str, Any], key: str, default: str) -> str:
     """Read a non-empty string from dictionary data."""

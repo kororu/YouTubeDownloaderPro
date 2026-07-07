@@ -13,6 +13,92 @@ QWidget#mainContentArea {
     background-color: #24292f;
 }
 
+QWidget#toolbarWidget,
+QWidget#statusWidget,
+QWidget#footerWidget {
+    background-color: #1f2328;
+}
+
+QWidget#queueWidget,
+QWidget#logWidget,
+QWidget#settingsWidget,
+QFrame#dependencyNoticeWidget {
+    background-color: #24292f;
+}
+
+QWidget#sidePanel {
+    background-color: #1f2328;
+}
+
+QLabel#sectionTitle {
+    color: #ffffff;
+    font-size: 12pt;
+    font-weight: 600;
+}
+
+QLineEdit,
+QComboBox,
+QSpinBox,
+QPlainTextEdit {
+    background-color: #0d1117;
+    border: 1px solid #3d444d;
+    border-radius: 6px;
+    color: #f0f3f6;
+    padding: 6px;
+    selection-background-color: #1f6feb;
+}
+
+QPushButton {
+    background-color: #2f363d;
+    border: 1px solid #57606a;
+    border-radius: 6px;
+    color: #f0f3f6;
+    padding: 6px 10px;
+}
+
+QPushButton:hover {
+    background-color: #3d444d;
+}
+
+QPushButton:disabled {
+    background-color: #21262d;
+    color: #6e7681;
+}
+
+QFrame#queueItemWidget {
+    background-color: #1f2328;
+    border: 1px solid #3d444d;
+    border-radius: 8px;
+}
+
+QLabel#queueItemMetadata,
+QLabel#commandLabel {
+    color: #c9d1d9;
+}
+
+QProgressBar {
+    background-color: #0d1117;
+    border: 1px solid #3d444d;
+    border-radius: 4px;
+    color: #f0f3f6;
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    background-color: #238636;
+    border-radius: 4px;
+}
+
+QDialog#aboutDialog {
+    background-color: #24292f;
+}
+
+QLabel#aboutTitle {
+    color: #ffffff;
+    font-size: 16pt;
+    font-weight: 700;
+}
+
 QToolTip {
     background-color: #2f363d;
     border: 1px solid #57606a;
