@@ -72,8 +72,34 @@ QFrame#queueItemWidget {
 }
 
 QLabel#queueItemMetadata,
+QLabel#queueItemProgress,
 QLabel#commandLabel {
     color: #c9d1d9;
+}
+
+QLabel#emptyQueueLabel {
+    color: #8b949e;
+    font-size: 11pt;
+}
+
+QLabel#queueItemError {
+    color: #ff7b72;
+}
+
+QLabel#queueItemTitle {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+QMenuBar,
+QMenu {
+    background-color: #1f2328;
+    color: #f0f3f6;
+}
+
+QMenuBar::item:selected,
+QMenu::item:selected {
+    background-color: #2f363d;
 }
 
 QProgressBar {

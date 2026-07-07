@@ -61,6 +61,17 @@
 - Complete Commit 047 - Up to 3 simultaneous downloads.
 - Complete Commit 048 - Sprint 5 stabilization.
 
+## Sprint 6
+
+- Complete Commit 049 - Queue persistence.
+- Complete Commit 050 - Settings persistence improvements.
+- Complete Commit 051 - Better error messages.
+- Complete Commit 052 - Better empty states.
+- Complete Commit 053 - Keyboard shortcuts.
+- Complete Commit 054 - UI polish pass.
+- Complete Commit 055 - Log export.
+- Complete Commit 056 - Sprint 6 stabilization.
+
 ## Next
 
-- Commit 049 - Queue persistence.
+- Commit 057 - PyInstaller spec.

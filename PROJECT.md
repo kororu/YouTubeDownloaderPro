@@ -89,6 +89,15 @@ YouTubeDownloaderPro/
 - The toolbar starts selected queue items and cancels current or all queued downloads.
 - Download state and progress are reflected in `QueueWidget`, `QueueItemWidget`, `LogWidget`, and `StatusWidget`.
 
+## Sprint 6 Polish
+
+- `QueuePersistenceService` stores queue items as JSON and restores them on startup.
+- Settings writes use atomic replacement when supported by the filesystem.
+- Main window actions include keyboard shortcuts for downloading, cancelling, selecting, and exporting logs.
+- Error messages are converted into clearer user-facing text before reaching the UI.
+- Empty queue state, menu styling, queue item progress, and error styling are refined in QSS.
+- `LogWidget` can export the visible session log to a text file.
+
 ## Engineering Standards
 
 - Python 3.12+ is the supported runtime.

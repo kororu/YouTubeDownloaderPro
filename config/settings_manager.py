@@ -75,11 +75,11 @@ class SettingsManager:
         self._ensure_settings_directory()
         serialized_settings: str = json.dumps(settings.to_dict(), indent=4, sort_keys=True)
         try:
-            self._settings_file.write_text(f"{serialized_settings}\n", encoding="utf-8")
+            self._write_settings_text(f"{serialized_settings}\n")
         except OSError:
             self._settings_file = self._fallback_settings_file()
             self._settings_file.parent.mkdir(parents=True, exist_ok=True)
-            self._settings_file.write_text(f"{serialized_settings}\n", encoding="utf-8")
+            self._write_settings_text(f"{serialized_settings}\n")
 
     def _ensure_settings_directory(self) -> None:
         """Create the settings directory or switch to a writable fallback."""
@@ -97,3 +97,9 @@ class SettingsManager:
             Settings file path inside the system temporary directory.
         """
         return Path(tempfile.gettempdir()) / APPLICATION_NAME.replace(" ", "") / "settings.json"
+
+    def _write_settings_text(self, text: str) -> None:
+        """Write settings atomically when the filesystem allows it."""
+        temporary_file: Path = self._settings_file.with_suffix(".tmp")
+        temporary_file.write_text(text, encoding="utf-8")
+        temporary_file.replace(self._settings_file)

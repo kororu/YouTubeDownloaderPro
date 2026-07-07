@@ -139,9 +139,10 @@ class Settings:
         Returns:
             Updated settings instance.
         """
+        normalized_output_folder: str = str(Path(output_folder.strip()).expanduser())
         return replace(
             self,
-            output_folder=output_folder,
+            output_folder=normalized_output_folder,
             selected_format=selected_format,
             selected_quality=selected_quality,
             theme=theme,

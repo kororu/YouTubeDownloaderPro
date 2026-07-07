@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
 
 
 class LogWidget(QWidget):
     """Read-only log area for application messages."""
+
+    export_requested: Signal = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the log widget.
@@ -68,8 +72,12 @@ class LogWidget(QWidget):
         clear_button: QPushButton = QPushButton("Limpiar", self)
         clear_button.clicked.connect(self._clear_log)
 
+        export_button: QPushButton = QPushButton("Exportar", self)
+        export_button.clicked.connect(self.export_requested.emit)
+
         header_layout.addWidget(title_label)
         header_layout.addStretch(1)
+        header_layout.addWidget(export_button)
         header_layout.addWidget(clear_button)
 
         self._log_output = QPlainTextEdit(self)
@@ -84,3 +92,12 @@ class LogWidget(QWidget):
         """Clear the visible log output."""
         self._log_output.clear()
         self.append_info("Registro limpiado.")
+
+    def export_to_file(self, destination_path: Path) -> None:
+        """Export visible logs to a text file.
+
+        Args:
+            destination_path: Destination text file path.
+        """
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        destination_path.write_text(self._log_output.toPlainText(), encoding="utf-8")

@@ -25,6 +25,7 @@ class QueueWidget(QWidget):
     """Scrollable queue area based on QScrollArea."""
 
     queue_changed: Signal = Signal(int, int)
+    item_removed: Signal = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the queue widget.
@@ -149,6 +150,7 @@ class QueueWidget(QWidget):
         item_widget.deleteLater()
         self._apply_filter()
         self._emit_queue_changed()
+        self.item_removed.emit(item_id)
 
     def remove_selected_items(self) -> None:
         """Remove every selected queue item."""
@@ -232,7 +234,10 @@ class QueueWidget(QWidget):
         self._items_layout.setContentsMargins(0, 0, 0, 0)
         self._items_layout.setSpacing(8)
 
-        self._empty_state = QLabel("No hay elementos en cola.", self._items_container)
+        self._empty_state = QLabel(
+            "No hay elementos en cola.\nAgregue una URL de video o playlist desde la barra superior.",
+            self._items_container,
+        )
         self._empty_state.setObjectName("emptyQueueLabel")
         self._empty_state.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._empty_state.setMinimumHeight(220)

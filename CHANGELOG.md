@@ -36,3 +36,10 @@ All notable changes to this project will be documented in this file.
 - Added output folder usage from persisted settings.
 - Added cancel current and cancel all download actions.
 - Stabilized Sprint 5 documentation and queue integration.
+- Added JSON queue persistence and queue restoration on startup.
+- Improved settings persistence with atomic file replacement.
+- Added clearer user-facing error messages.
+- Improved empty queue states and visual polish.
+- Added keyboard shortcuts for queue and log actions.
+- Added visible log export.
+- Stabilized Sprint 6 documentation and UI behavior.

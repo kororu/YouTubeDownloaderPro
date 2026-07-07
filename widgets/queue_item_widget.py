@@ -109,6 +109,18 @@ class QueueItemWidget(QFrame):
     def to_download_item(self) -> DownloadItem:
         """Return the current display data as a download item."""
         from models.download_enums import DownloadFormat, DownloadQuality
+        from models.video_metadata import VideoMetadata
+
+        metadata: VideoMetadata | None = None
+        if self._item_data.title is not None:
+            metadata = VideoMetadata(
+                source_url=self._item_data.source_url,
+                title=self._item_data.title,
+                duration_seconds=None,
+                uploader=self._item_data.uploader,
+                thumbnail_url=None,
+                webpage_url=self._item_data.source_url,
+            )
 
         return DownloadItem(
             item_id=self._item_data.item_id,
@@ -116,6 +128,7 @@ class QueueItemWidget(QFrame):
             media_format=DownloadFormat(self._item_data.media_format),
             quality=DownloadQuality(self._item_data.quality),
             status=_status_from_label(self._item_data.status),
+            metadata=metadata,
             error_message=self._item_data.error_message,
             progress_percentage=self._item_data.progress_percentage,
         )
