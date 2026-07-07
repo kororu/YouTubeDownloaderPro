@@ -1,0 +1,59 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging and build output
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# PyInstaller
+*.spec
+*.manifest
+*.toc
+*.pkg
+*.pyz
+
+# Installer artifacts
+*.msi
+*.exe
+*.dmg
+*.app
+
+# Logs and runtime files
+*.log
+*.tmp
+*.temp
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# VS Code
+.vscode/
+.history/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project runtime output
+downloads/*
+!downloads/__init__.py
