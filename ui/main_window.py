@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QCloseEvent
@@ -16,8 +17,10 @@ from dialogs.about_dialog import AboutDialog
 from dialogs.playlist_dialog import PlaylistDialog
 from models.download_enums import DownloadFormat, DownloadQuality, DownloadStatus
 from models.download_item import DownloadItem
+from models.download_progress import DownloadProgress
 from models.playlist_metadata import PlaylistMetadata, PlaylistVideo
 from models.video_metadata import VideoMetadata
+from services.download_queue_service import DownloadQueueService
 from services.metadata_worker import MetadataWorker
 from services.playlist_worker import PlaylistWorker
 from services.url_validator import UrlValidationResult, UrlValidator
@@ -55,6 +58,9 @@ class MainWindow(QMainWindow):
         self._metadata_workers: dict[str, MetadataWorker] = {}
         self._playlist_workers: dict[str, PlaylistWorker] = {}
         self._playlist_requests: dict[str, tuple[DownloadFormat, DownloadQuality]] = {}
+        self._download_queue_service: DownloadQueueService = DownloadQueueService(
+            self._settings.max_concurrent_downloads
+        )
         self._toolbar_widget: ToolbarWidget
         self._queue_widget: QueueWidget
         self._log_widget: LogWidget
@@ -149,11 +155,18 @@ class MainWindow(QMainWindow):
         """Connect main window widget signals."""
         self._toolbar_widget.add_video_requested.connect(self._add_video_to_queue)
         self._toolbar_widget.add_playlist_requested.connect(self._add_playlist_to_queue)
+        self._toolbar_widget.start_downloads_requested.connect(self._start_selected_downloads)
+        self._toolbar_widget.cancel_current_requested.connect(self._cancel_current_download)
+        self._toolbar_widget.cancel_all_requested.connect(self._cancel_all_downloads)
         self._toolbar_widget.settings_requested.connect(self._focus_settings_panel)
         self._toolbar_widget.about_requested.connect(self._show_about_dialog)
         self._queue_widget.queue_changed.connect(self._handle_queue_changed)
         self._settings_widget.settings_changed.connect(self._save_settings)
         self._status_widget.update_dependency_status(self._dependency_result.all_available)
+        self._download_queue_service.item_changed.connect(self._handle_download_item_changed)
+        self._download_queue_service.progress_changed.connect(self._handle_download_progress)
+        self._download_queue_service.log_received.connect(self._handle_download_log)
+        self._download_queue_service.queue_finished.connect(self._handle_download_queue_finished)
 
     def _add_video_to_queue(self, source_url: str, media_format: str, quality: str) -> None:
         """Validate a video URL and load metadata."""
@@ -171,6 +184,7 @@ class MainWindow(QMainWindow):
             return
 
         self._queue_widget.add_download_item(download_item)
+        self._download_queue_service.add_items((download_item,))
         self._log_widget.append_info(f"Cargando metadatos: {download_item.source_url}")
         self._status_widget.set_status_message("cargando metadatos")
         self._start_metadata_worker(download_item)
@@ -298,11 +312,66 @@ class MainWindow(QMainWindow):
                     metadata=video.to_video_metadata(),
                 )
             )
+        self._download_queue_service.add_items(self._queue_widget.all_download_items())
 
         self._log_widget.append_info(
             f"Videos agregados desde playlist: {len(selected_videos)} de {playlist.title}"
         )
         self._status_widget.set_status_message("playlist agregada")
+
+    def _start_selected_downloads(self) -> None:
+        """Start downloads for selected queue items."""
+        selected_items: tuple[DownloadItem, ...] = self._queue_widget.selected_download_items()
+        if not selected_items:
+            self._show_input_error("Seleccione uno o más elementos de la cola.")
+            return
+
+        ready_items: tuple[DownloadItem, ...] = tuple(
+            item for item in selected_items if item.status in {DownloadStatus.READY, DownloadStatus.FAILED}
+        )
+        if not ready_items:
+            self._show_input_error("No hay elementos listos para descargar.")
+            return
+
+        self._download_queue_service.add_items(ready_items)
+        self._download_queue_service.start_downloads(
+            tuple(item.item_id for item in ready_items),
+            Path(self._settings.output_folder),
+        )
+        self._log_widget.append_info(f"Descargas iniciadas: {len(ready_items)}")
+        self._status_widget.set_status_message("descargando")
+
+    def _cancel_current_download(self) -> None:
+        """Cancel the current active download."""
+        self._download_queue_service.cancel_current()
+        self._log_widget.append_warning("Cancelación solicitada para la descarga actual.")
+
+    def _cancel_all_downloads(self) -> None:
+        """Cancel all active and pending downloads."""
+        self._download_queue_service.cancel_all()
+        self._log_widget.append_warning("Cancelación solicitada para toda la cola.")
+
+    def _handle_download_item_changed(self, item: object) -> None:
+        """Update UI when a download item changes."""
+        if not isinstance(item, DownloadItem):
+            return
+        self._queue_widget.update_download_item(item)
+
+    def _handle_download_progress(self, item_id: str, progress: object) -> None:
+        """Update UI progress from worker output."""
+        if not isinstance(progress, DownloadProgress):
+            return
+        self._status_widget.set_progress(progress.percentage)
+
+    def _handle_download_log(self, item_id: str, message: str) -> None:
+        """Display download worker log lines."""
+        self._log_widget.append_info(message)
+
+    def _handle_download_queue_finished(self) -> None:
+        """Handle queue completion."""
+        self._status_widget.set_status_message("cola finalizada")
+        self._status_widget.set_progress(100.0)
+        self._log_widget.append_info("Cola de descargas finalizada.")
 
     def _handle_playlist_failed(self, request_id: str, error_message: str) -> None:
         """Handle playlist metadata loading failure."""
@@ -320,6 +389,7 @@ class MainWindow(QMainWindow):
         """Persist settings changed from the settings panel."""
         self._settings_manager.save(settings)
         self._settings = settings
+        self._download_queue_service.update_max_concurrent_downloads(settings.max_concurrent_downloads)
         self._settings_widget.update_settings(settings)
         self._toolbar_widget.set_download_preferences(
             settings.selected_format,

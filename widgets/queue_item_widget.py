@@ -31,6 +31,7 @@ class QueueItemData:
     title: str | None = None
     uploader: str | None = None
     error_message: str | None = None
+    progress_percentage: float = 0.0
 
     @classmethod
     def from_download_item(cls, download_item: DownloadItem) -> "QueueItemData":
@@ -57,6 +58,7 @@ class QueueItemData:
             title=metadata_title,
             uploader=metadata_uploader,
             error_message=download_item.error_message,
+            progress_percentage=download_item.progress_percentage,
         )
 
 
@@ -79,6 +81,7 @@ class QueueItemWidget(QFrame):
         self._title_label: QLabel
         self._url_label: QLabel
         self._metadata_label: QLabel
+        self._progress_label: QLabel
         self._error_label: QLabel
         self.setObjectName("queueItemWidget")
         self._build_layout()
@@ -102,6 +105,20 @@ class QueueItemWidget(QFrame):
     def quality(self) -> str:
         """Return the selected quality."""
         return self._item_data.quality
+
+    def to_download_item(self) -> DownloadItem:
+        """Return the current display data as a download item."""
+        from models.download_enums import DownloadFormat, DownloadQuality
+
+        return DownloadItem(
+            item_id=self._item_data.item_id,
+            source_url=self._item_data.source_url,
+            media_format=DownloadFormat(self._item_data.media_format),
+            quality=DownloadQuality(self._item_data.quality),
+            status=_status_from_label(self._item_data.status),
+            error_message=self._item_data.error_message,
+            progress_percentage=self._item_data.progress_percentage,
+        )
 
     def is_selected(self) -> bool:
         """Return whether the item is selected."""
@@ -169,6 +186,9 @@ class QueueItemWidget(QFrame):
         self._metadata_label = QLabel(self)
         self._metadata_label.setObjectName("queueItemMetadata")
 
+        self._progress_label = QLabel(self)
+        self._progress_label.setObjectName("queueItemProgress")
+
         self._error_label = QLabel(self)
         self._error_label.setObjectName("queueItemError")
         self._error_label.setWordWrap(True)
@@ -176,6 +196,7 @@ class QueueItemWidget(QFrame):
         text_layout.addWidget(self._title_label)
         text_layout.addWidget(self._url_label)
         text_layout.addWidget(self._metadata_label)
+        text_layout.addWidget(self._progress_label)
         text_layout.addWidget(self._error_label)
 
         remove_button: QPushButton = QPushButton("Quitar", self)
@@ -206,6 +227,7 @@ class QueueItemWidget(QFrame):
                 f"Estado: {self._item_data.status}"
             )
         )
+        self._progress_label.setText(f"Progreso: {self._item_data.progress_percentage:.1f}%")
         error_message: str = self._item_data.error_message or ""
         self._error_label.setText(error_message)
         self._error_label.setVisible(bool(error_message))
@@ -217,6 +239,25 @@ def _translate_status(status: DownloadStatus) -> str:
         DownloadStatus.PENDING: "Pendiente",
         DownloadStatus.LOADING_METADATA: "Cargando metadatos",
         DownloadStatus.READY: "Listo",
+        DownloadStatus.QUEUED: "En cola",
+        DownloadStatus.DOWNLOADING: "Descargando",
+        DownloadStatus.COMPLETED: "Completado",
+        DownloadStatus.CANCELLED: "Cancelado",
         DownloadStatus.FAILED: "Error",
     }
     return status_labels[status]
+
+
+def _status_from_label(status_label: str) -> DownloadStatus:
+    """Convert display status text to a domain status."""
+    status_values: dict[str, DownloadStatus] = {
+        "Pendiente": DownloadStatus.PENDING,
+        "Cargando metadatos": DownloadStatus.LOADING_METADATA,
+        "Listo": DownloadStatus.READY,
+        "En cola": DownloadStatus.QUEUED,
+        "Descargando": DownloadStatus.DOWNLOADING,
+        "Completado": DownloadStatus.COMPLETED,
+        "Cancelado": DownloadStatus.CANCELLED,
+        "Error": DownloadStatus.FAILED,
+    }
+    return status_values.get(status_label, DownloadStatus.PENDING)

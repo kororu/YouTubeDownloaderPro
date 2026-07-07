@@ -29,3 +29,10 @@ All notable changes to this project will be documented in this file.
 - Added PlaylistDialog for selecting playlist videos.
 - Added playlist selection integration that adds selected videos to the queue.
 - Added playlist error handling and Sprint 4 documentation.
+- Added download queue service with up to three simultaneous downloads.
+- Added download worker using yt-dlp through subprocess.Popen.
+- Added yt-dlp progress parsing and UI progress updates.
+- Added MP4 and MP3 download execution using selected format and quality.
+- Added output folder usage from persisted settings.
+- Added cancel current and cancel all download actions.
+- Stabilized Sprint 5 documentation and queue integration.

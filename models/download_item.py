@@ -21,6 +21,7 @@ class DownloadItem:
         status: Current item status.
         metadata: Extracted video metadata when available.
         error_message: Error message when the item failed.
+        progress_percentage: Download progress percentage.
     """
 
     item_id: str
@@ -30,6 +31,7 @@ class DownloadItem:
     status: DownloadStatus
     metadata: VideoMetadata | None = None
     error_message: str | None = None
+    progress_percentage: float = 0.0
 
     @classmethod
     def create(
@@ -77,4 +79,34 @@ class DownloadItem:
             status=DownloadStatus.FAILED,
             metadata=self.metadata,
             error_message=error_message,
+            progress_percentage=self.progress_percentage,
+        )
+
+    def with_status(self, status: DownloadStatus) -> "DownloadItem":
+        """Create an item with updated status."""
+        progress_percentage: float = self.progress_percentage
+        if status is DownloadStatus.COMPLETED:
+            progress_percentage = 100.0
+        return DownloadItem(
+            item_id=self.item_id,
+            source_url=self.source_url,
+            media_format=self.media_format,
+            quality=self.quality,
+            status=status,
+            metadata=self.metadata,
+            error_message=self.error_message,
+            progress_percentage=progress_percentage,
+        )
+
+    def with_progress(self, progress_percentage: float) -> "DownloadItem":
+        """Create an item with updated progress."""
+        return DownloadItem(
+            item_id=self.item_id,
+            source_url=self.source_url,
+            media_format=self.media_format,
+            quality=self.quality,
+            status=DownloadStatus.DOWNLOADING,
+            metadata=self.metadata,
+            error_message=self.error_message,
+            progress_percentage=max(0.0, min(100.0, progress_percentage)),
         )

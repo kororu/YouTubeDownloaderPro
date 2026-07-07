@@ -48,6 +48,14 @@ class StatusWidget(QWidget):
         """
         self._status_label.setText(f"Estado: {message}")
 
+    def set_progress(self, percentage: float) -> None:
+        """Update the status progress bar.
+
+        Args:
+            percentage: Progress percentage.
+        """
+        self._progress_bar.setValue(round(max(0.0, min(100.0, percentage))))
+
     def _build_layout(self) -> None:
         """Build the status layout."""
         layout: QHBoxLayout = QHBoxLayout(self)

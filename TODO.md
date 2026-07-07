@@ -47,6 +47,20 @@
 - Complete Commit 036 - Playlist error handling.
 - Complete Commit 037 - Sprint 4 stabilization.
 
+## Sprint 5
+
+- Complete Commit 038 - Download queue service.
+- Complete Commit 039 - Download worker.
+- Complete Commit 040 - Progress parsing.
+- Complete Commit 041 - MP4 download.
+- Complete Commit 042 - MP3 download.
+- Complete Commit 043 - Quality selection.
+- Complete Commit 044 - Output folder selection.
+- Complete Commit 045 - Cancel current download.
+- Complete Commit 046 - Cancel all downloads.
+- Complete Commit 047 - Up to 3 simultaneous downloads.
+- Complete Commit 048 - Sprint 5 stabilization.
+
 ## Next
 
-- Commit 038 - Download queue service.
+- Commit 049 - Queue persistence.

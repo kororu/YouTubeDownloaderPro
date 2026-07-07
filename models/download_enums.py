@@ -29,4 +29,8 @@ class DownloadStatus(StrEnum):
     PENDING = "pending"
     LOADING_METADATA = "loading_metadata"
     READY = "ready"
+    QUEUED = "queued"
+    DOWNLOADING = "downloading"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
     FAILED = "failed"

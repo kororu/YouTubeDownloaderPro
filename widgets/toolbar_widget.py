@@ -19,6 +19,9 @@ class ToolbarWidget(QWidget):
 
     add_video_requested: Signal = Signal(str, str, str)
     add_playlist_requested: Signal = Signal(str, str, str)
+    start_downloads_requested: Signal = Signal()
+    cancel_current_requested: Signal = Signal()
+    cancel_all_requested: Signal = Signal()
     settings_requested: Signal = Signal()
     about_requested: Signal = Signal()
 
@@ -88,12 +91,24 @@ class ToolbarWidget(QWidget):
         about_button: QPushButton = QPushButton("Acerca de", self)
         about_button.clicked.connect(self.about_requested.emit)
 
+        start_button: QPushButton = QPushButton("Descargar seleccionados", self)
+        start_button.clicked.connect(self.start_downloads_requested.emit)
+
+        cancel_current_button: QPushButton = QPushButton("Cancelar actual", self)
+        cancel_current_button.clicked.connect(self.cancel_current_requested.emit)
+
+        cancel_all_button: QPushButton = QPushButton("Cancelar todo", self)
+        cancel_all_button.clicked.connect(self.cancel_all_requested.emit)
+
         layout.addWidget(url_label)
         layout.addWidget(self._url_input, 1)
         layout.addWidget(self._format_combo_box)
         layout.addWidget(self._quality_combo_box)
         layout.addWidget(self._add_video_button)
         layout.addWidget(self._add_playlist_button)
+        layout.addWidget(start_button)
+        layout.addWidget(cancel_current_button)
+        layout.addWidget(cancel_all_button)
         layout.addWidget(settings_button)
         layout.addWidget(about_button)
 

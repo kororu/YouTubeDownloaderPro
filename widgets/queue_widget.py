@@ -99,6 +99,18 @@ class QueueWidget(QWidget):
         item_widget.update_item(QueueItemData.from_download_item(updated_item))
         self._apply_filter()
 
+    def update_download_item(self, download_item: DownloadItem) -> None:
+        """Update a queue item from a domain item.
+
+        Args:
+            download_item: Updated domain item.
+        """
+        item_widget: QueueItemWidget | None = self._find_item(download_item.item_id)
+        if item_widget is None:
+            return
+        item_widget.update_item(QueueItemData.from_download_item(download_item))
+        self._apply_filter()
+
     def mark_item_failed(self, item_id: str, error_message: str) -> None:
         """Mark a queue item as failed.
 
@@ -163,6 +175,14 @@ class QueueWidget(QWidget):
     def selected_count(self) -> int:
         """Return selected queue item count."""
         return sum(1 for item in self._items if item.is_selected())
+
+    def selected_download_items(self) -> tuple[DownloadItem, ...]:
+        """Return selected queue item domain values."""
+        return tuple(item.to_download_item() for item in self._items if item.is_selected())
+
+    def all_download_items(self) -> tuple[DownloadItem, ...]:
+        """Return all queue item domain values."""
+        return tuple(item.to_download_item() for item in self._items)
 
     def _build_layout(self) -> None:
         """Build the queue layout."""
