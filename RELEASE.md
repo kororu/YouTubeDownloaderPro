@@ -66,6 +66,10 @@ Comprobar manualmente:
 - Registrar defectos conocidos y cambios finales en `CHANGELOG.md`.
 - Mantener `PROJECT_STATUS.md` alineado con los resultados reales.
 
+## Validación local más reciente
+
+El 2026-07-12 se completaron correctamente 24 pruebas con `unittest`, `compileall`, el arranque offscreen de `python app.py`, el build PyInstaller, el arranque offscreen del `.exe` y la generación del paquete portable. Continúan pendientes las descargas reales MP4/MP3, las playlists/Mix grandes y la prueba del portable en otro PC.
+
 ## Alcance futuro
 
 El roadmap hacia `v1.0.0` está en `PROJECT.md` y `TODO.md`. Formatos como WAV, historial completo, configuración avanzada y fuentes adicionales son planificados o sugeridos; no forman parte de la funcionalidad estable actual.

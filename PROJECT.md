@@ -46,7 +46,7 @@ La UI no debe contener lógica directa de descarga, persistencia o `subprocess`.
 
 ### En progreso
 
-El working tree de `v0.3.0` contiene ejecución silenciosa, rangos de playlist, `Cargar siguientes`, historial por URL y deduplicación. Se requiere validación manual de descargas reales, listas grandes y portable antes de declarar la versión estable.
+El working tree de `v0.3.0` contiene ejecución silenciosa, rangos de playlist, `Cargar siguientes`, historial por URL, deduplicación, cancelación segura y fallback incremental para Mixes. Las pruebas automatizadas, la compilación, el arranque, el build PyInstaller y la generación portable son correctos. Se requiere validación manual de descargas reales, listas grandes y portable en otro PC antes de declarar la versión estable.
 
 ### Problemas recientes que guían el roadmap
 

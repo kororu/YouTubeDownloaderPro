@@ -25,6 +25,7 @@ class ToolbarWidget(QWidget):
     add_video_requested: Signal = Signal(str, str, str)
     add_playlist_requested: Signal = Signal(str, str, str, object)
     add_next_playlist_range_requested: Signal = Signal(str, str, str)
+    playlist_range_error: Signal = Signal(str)
     start_downloads_requested: Signal = Signal()
     cancel_current_requested: Signal = Signal()
     cancel_all_requested: Signal = Signal()
@@ -357,11 +358,16 @@ class ToolbarWidget(QWidget):
 
     def _emit_add_playlist_requested(self) -> None:
         """Emit the add playlist request."""
+        try:
+            playlist_range: PlaylistRange = self._selected_playlist_range()
+        except ValueError:
+            self.playlist_range_error.emit("El fin de playlist debe ser igual o mayor que el inicio.")
+            return
         self.add_playlist_requested.emit(
             self._url_input.text().strip(),
             self.selected_format(),
             self.selected_quality(),
-            self._selected_playlist_range(),
+            playlist_range,
         )
         self._url_input.clear()
 

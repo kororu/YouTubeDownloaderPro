@@ -18,6 +18,7 @@ Convenciones:
 - `[~]` Mejorar cancelación del análisis de playlist.
 - `[~]` Mejorar logs de progreso.
 - `[~]` Mejorar soporte para YouTube Mix grandes.
+- `[x]` Validar tests, compilación, arranque, build PyInstaller y generación portable.
 - `[ ]` Validar MP4 y MP3 reales desde el `.exe`.
 - `[ ]` Validar el portable en otro PC Windows.
 

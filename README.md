@@ -19,6 +19,8 @@ Versión visible actual: `v0.3.0`.
 - `install_dependencies.bat` para verificar e instalar manualmente `yt-dlp` y FFmpeg.
 - Carga incremental de playlists y YouTube Mix.
 - En el working tree de `v0.3.0`: ejecución silenciosa de procesos, rangos de playlist, `Cargar siguientes` y prevención de duplicados.
+- Fallback incremental seguro para Mixes que no respeten las opciones de rango de `yt-dlp`.
+- Cancelación del análisis de playlist desde `Cancelar actual` y `Cancelar todo`.
 
 ### En progreso y pendiente de validación
 
@@ -66,6 +68,8 @@ python app.py
 ## Playlists y YouTube Mix
 
 El límite predeterminado es de 200 videos para proteger la capacidad de respuesta de la interfaz. La carga por rangos permite procesar bloques como `1-200`, `201-400` y `401-600`; `Cargar siguientes` continúa desde el último bloque registrado para la misma URL. Estas mejoras de `v0.3.0` están implementadas en el working tree y requieren validación manual con fuentes reales antes de considerarse estables.
+
+Los rangos manuales no pueden estar vacíos ni superar 500 videos. Si un YouTube Mix no respeta `--playlist-start` y `--playlist-end`, la aplicación informa el problema y usa un recorrido incremental acotado como fallback.
 
 ## Empaquetado
 

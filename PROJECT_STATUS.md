@@ -9,6 +9,8 @@
 - Stack: Python 3.12+, PySide6, QThread, `subprocess`, `yt-dlp`, `ffmpeg`, JSON, QSS y PyInstaller.
 - Distribución: ejecutable PyInstaller `onedir` y paquete portable.
 - Estado Git: el working tree contiene cambios sin commit; esta documentación no los considera una release publicada.
+- Estado del ejecutable: generado correctamente y con arranque offscreen verificado el 2026-07-12.
+- Estado del paquete portable: generado correctamente; pendiente de prueba manual en otro PC Windows.
 
 ## Implementado
 
@@ -36,6 +38,9 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 - Acción `Cargar siguientes` con historial por URL.
 - Prevención de duplicados por `video_id` o URL.
 - Mejoras de cancelación y logs del análisis de playlists.
+- Fallback incremental informado cuando un YouTube Mix no respeta el rango solicitado.
+- Validación de rangos vacíos y protección contra bloques superiores a 500 videos.
+- Normalización de URL como respaldo para la prevención de duplicados.
 - Preparación automatizada del paquete portable.
 
 ## Pendiente de verificación
@@ -47,7 +52,7 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 - Confirmar cancelación durante el análisis y claridad de los logs de progreso.
 - Revisar layout superior, separación de controles, textos cortados y desplegables.
 - Validar tema dark, imagen de fondo, escalado y contraste en el `.exe`.
-- Generar y probar el paquete portable en otro PC Windows sin VS Code.
+- Probar el paquete portable generado en otro PC Windows sin VS Code.
 - Mejorar, si las pruebas lo requieren, el contenido y robustez del empaquetado portable.
 
 ## Planificado
@@ -126,6 +131,17 @@ git diff --stat
 ## Próximo paso recomendado
 
 Completar la matriz de pruebas manuales de `v0.3.0` con videos, MP4, MP3, playlists grandes, YouTube Mix, rangos consecutivos y el paquete portable en otro PC. Corregir solo los defectos confirmados antes de etiquetar o publicar la versión.
+
+## Validaciones automáticas realizadas
+
+- `python -m unittest discover -s tests -v`: 24 pruebas correctas.
+- `python -m compileall app.py config core models services resources ui widgets dialogs styles tests`: correcto.
+- Arranque de `python app.py` en modo Qt offscreen: correcto.
+- `scripts\build_windows.ps1`: correcto.
+- Arranque offscreen de `dist\YouTubeDownloaderPro\YouTubeDownloaderPro.exe`: correcto.
+- `scripts\package_portable.ps1`: correcto.
+- `git diff --check`: correcto.
+- `python -m pytest`: no ejecutado porque `pytest` no está instalado; se utilizó `unittest` sin agregar dependencias.
 
 ## Reglas para futuras sesiones
 

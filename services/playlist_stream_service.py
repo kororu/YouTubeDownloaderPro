@@ -19,6 +19,7 @@ from services.yt_dlp_command_builder import YtDlpCommandBuilder
 PlaylistBatchCallback = Callable[[tuple[PlaylistVideo, ...], int, int | None], None]
 PlaylistTotalCallback = Callable[[int], None]
 PlaylistLimitCallback = Callable[[int, int], None]
+PlaylistFallbackCallback = Callable[[], None]
 MAX_DIAGNOSTIC_LINES: int = 20
 
 
@@ -64,6 +65,7 @@ class PlaylistStreamService:
         batch_loaded: PlaylistBatchCallback,
         total_detected: PlaylistTotalCallback,
         limit_reached: PlaylistLimitCallback,
+        fallback_used: PlaylistFallbackCallback,
     ) -> PlaylistStreamResult:
         """Stream playlist videos incrementally.
 
@@ -74,6 +76,7 @@ class PlaylistStreamService:
             batch_loaded: Callback called for each batch of selectable videos.
             total_detected: Callback called when yt-dlp exposes a total count.
             limit_reached: Callback retained for compatibility with older callers.
+            fallback_used: Callback called before safe incremental fallback scanning.
 
         Returns:
             Streaming result.
@@ -97,9 +100,10 @@ class PlaylistStreamService:
                 total_detected=total_detected,
                 use_ytdlp_range=True,
             )
-        except CommandExecutionError:
+        except (CommandExecutionError, MetadataExtractionError):
             if self._cancel_requested:
                 raise
+            fallback_used()
             return self._stream_playlist_once(
                 source_url=source_url,
                 playlist_range=playlist_range,
@@ -159,6 +163,8 @@ class PlaylistStreamService:
                 if new_total is not None and new_total != detected_total:
                     detected_total = new_total
                     total_detected(new_total)
+                    if new_total > playlist_range.item_count:
+                        limit_reached(new_total, playlist_range.item_count)
 
                 scanned_count += 1
                 entry_index: int = self._read_playlist_index(

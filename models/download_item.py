@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, parse_qsl, urlencode, urlparse, urlunparse
 from uuid import uuid4
 
 from models.download_enums import DownloadFormat, DownloadQuality, DownloadStatus
@@ -114,7 +114,7 @@ class DownloadItem:
         video_id: str | None = _read_video_id_from_url(self.source_url)
         if video_id is not None:
             return f"video:{video_id}"
-        return f"url:{self.source_url.strip().lower()}"
+        return f"url:{_normalize_url_for_comparison(self.source_url)}"
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the item to JSON-serializable data.
@@ -248,3 +248,20 @@ def _read_video_id_from_url(source_url: str) -> str | None:
         if video_values and video_values[0].strip():
             return video_values[0].strip()
     return None
+
+
+def _normalize_url_for_comparison(source_url: str) -> str:
+    """Normalize a URL for stable duplicate comparison."""
+    parsed_url = urlparse(source_url.strip())
+    normalized_query: str = urlencode(sorted(parse_qsl(parsed_url.query, keep_blank_values=True)))
+    normalized_path: str = parsed_url.path.rstrip("/") or "/"
+    return urlunparse(
+        (
+            parsed_url.scheme.lower(),
+            parsed_url.netloc.lower(),
+            normalized_path,
+            parsed_url.params,
+            normalized_query,
+            "",
+        )
+    )

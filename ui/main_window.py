@@ -54,6 +54,7 @@ class PlaylistLoadStats:
     processed_count: int = 0
     added_count: int = 0
     duplicate_count: int = 0
+    last_playlist_index: int | None = None
 
 
 class MainWindow(QMainWindow):
@@ -222,6 +223,7 @@ class MainWindow(QMainWindow):
         self._toolbar_widget.add_video_requested.connect(self._add_video_to_queue)
         self._toolbar_widget.add_playlist_requested.connect(self._add_playlist_to_queue)
         self._toolbar_widget.add_next_playlist_range_requested.connect(self._add_next_playlist_range_to_queue)
+        self._toolbar_widget.playlist_range_error.connect(self._show_input_error)
         self._toolbar_widget.start_downloads_requested.connect(self._start_selected_downloads)
         self._toolbar_widget.cancel_current_requested.connect(self._cancel_current_download)
         self._toolbar_widget.cancel_all_requested.connect(self._cancel_all_downloads)
@@ -306,9 +308,8 @@ class MainWindow(QMainWindow):
             return
 
         if playlist_range.item_count > 500:
-            self._log_widget.append_warning(
-                f"Advertencia: el rango solicitado contiene {playlist_range.item_count} videos."
-            )
+            self._show_input_error("El rango de playlist no puede superar 500 videos.")
+            return
 
         normalized_url: str = validation_result.normalized_url
         is_youtube_mix: bool = self._url_validator.is_youtube_mix_url(normalized_url)
@@ -415,6 +416,7 @@ class MainWindow(QMainWindow):
         worker.playlist_started.connect(self._handle_playlist_started)
         worker.playlist_total_detected.connect(self._handle_playlist_total_detected)
         worker.playlist_limit_reached.connect(self._handle_playlist_limit_reached)
+        worker.playlist_fallback_used.connect(self._handle_playlist_fallback_used)
         worker.playlist_batch_loaded.connect(self._handle_playlist_batch_loaded)
         worker.playlist_finished.connect(self._handle_playlist_finished)
         worker.playlist_cancelled.connect(self._handle_playlist_cancelled)
@@ -442,8 +444,22 @@ class MainWindow(QMainWindow):
 
     def _handle_playlist_limit_reached(self, request_id: str, total_count: int, max_items: int) -> None:
         """Handle active playlist limit notification."""
-        self._log_widget.append_warning(f"Límite activo: se procesarán {max_items} videos")
+        request: PlaylistLoadRequest | None = self._playlist_requests.get(request_id)
+        if request is None:
+            return
+        self._log_widget.append_warning(
+            f"La playlist contiene {total_count} videos. "
+            f"Se procesará el rango solicitado {request.playlist_range.label()} para evitar bloqueos."
+        )
         self._status_widget.set_status_message("límite de playlist activo")
+
+    def _handle_playlist_fallback_used(self, request_id: str) -> None:
+        """Report safe incremental fallback for a playlist range."""
+        if request_id not in self._playlist_requests:
+            return
+        self._log_widget.append_warning(
+            "yt-dlp no respetó el rango solicitado; se usará un recorrido incremental seguro."
+        )
 
     def _handle_playlist_batch_loaded(
         self,
@@ -502,6 +518,10 @@ class MainWindow(QMainWindow):
         percentage: int = min(100, round((processed_count / requested_count) * 100))
         self._status_widget.set_progress(float(percentage))
         last_video: PlaylistVideo = playlist_videos[-1]
+        stats.last_playlist_index = max(
+            stats.last_playlist_index or request.playlist_range.start_index,
+            last_video.index,
+        )
         progress_message: str = (
             f"Procesando video {last_video.index} de {request.playlist_range.end_index} ({percentage}%)"
         )
@@ -525,16 +545,17 @@ class MainWindow(QMainWindow):
         self._playlist_totals.pop(request_id, None)
         self._active_playlist_loads = max(0, self._active_playlist_loads - 1)
         self._persist_queue()
-        if request is not None and processed_count > 0:
-            completed_end_index: int = min(
-                request.playlist_range.end_index,
-                request.playlist_range.start_index + processed_count - 1,
+        if request is not None and processed_count > 0 and stats.last_playlist_index is not None:
+            completed_end_index: int = min(request.playlist_range.end_index, stats.last_playlist_index)
+            completed_range: PlaylistRange = PlaylistRange(
+                request.playlist_range.start_index,
+                completed_end_index,
             )
             self._playlist_range_history_service.save_completed_range(
                 request.source_url,
-                PlaylistRange(request.playlist_range.start_index, completed_end_index),
+                completed_range,
             )
-            next_range: PlaylistRange = request.playlist_range.next_range(self._settings.max_playlist_items)
+            next_range: PlaylistRange = completed_range.next_range(self._settings.max_playlist_items)
             self._log_widget.append_info(f"Próximo rango sugerido: {next_range.label()}")
         if limit_reached:
             self._log_widget.append_warning("Carga detenida al alcanzar el límite configurado")
@@ -579,7 +600,12 @@ class MainWindow(QMainWindow):
         self._status_widget.set_status_message("descargando")
 
     def _cancel_current_download(self) -> None:
-        """Cancel the current active download."""
+        """Cancel the current playlist analysis or active download."""
+        playlist_worker: PlaylistWorker | None = next(iter(self._playlist_workers.values()), None)
+        if playlist_worker is not None:
+            playlist_worker.cancel()
+            self._log_widget.append_warning("Cancelación solicitada para la carga de playlist actual.")
+            return
         self._download_queue_service.cancel_current()
         self._log_widget.append_warning("Cancelación solicitada para la descarga actual.")
 

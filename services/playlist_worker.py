@@ -17,6 +17,7 @@ class PlaylistWorker(QThread):
     playlist_started: Signal = Signal(str, str, object)
     playlist_total_detected: Signal = Signal(str, int)
     playlist_limit_reached: Signal = Signal(str, int, int)
+    playlist_fallback_used: Signal = Signal(str)
     playlist_batch_loaded: Signal = Signal(str, object, int, object)
     playlist_finished: Signal = Signal(str, int, bool)
     playlist_cancelled: Signal = Signal(str, int)
@@ -54,6 +55,7 @@ class PlaylistWorker(QThread):
                 self._emit_batch_loaded,
                 self._emit_total_detected,
                 self._emit_limit_reached,
+                self._emit_fallback_used,
             )
         except Exception as exc:
             self.playlist_failed.emit(self._request_id, str(exc))
@@ -83,3 +85,7 @@ class PlaylistWorker(QThread):
     def _emit_limit_reached(self, total_count: int, max_items: int) -> None:
         """Emit active playlist limit information."""
         self.playlist_limit_reached.emit(self._request_id, total_count, max_items)
+
+    def _emit_fallback_used(self) -> None:
+        """Report that yt-dlp range options required safe fallback scanning."""
+        self.playlist_fallback_used.emit(self._request_id)

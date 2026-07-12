@@ -36,6 +36,25 @@ class DownloadItemTestCase(unittest.TestCase):
 
         self.assertEqual(item.duplicate_key(), "video:abc123")
 
+    def test_duplicate_key_normalizes_generic_url(self) -> None:
+        """Generic URLs ignore host case, query order, trailing slash, and fragments."""
+        first_item: DownloadItem = DownloadItem(
+            item_id="first",
+            source_url="HTTPS://Example.com/video/?b=2&a=1#section",
+            media_format=DownloadFormat.MP4,
+            quality=DownloadQuality.BEST,
+            status=DownloadStatus.READY,
+        )
+        second_item: DownloadItem = DownloadItem(
+            item_id="second",
+            source_url="https://example.com/video?a=1&b=2",
+            media_format=DownloadFormat.MP4,
+            quality=DownloadQuality.BEST,
+            status=DownloadStatus.READY,
+        )
+
+        self.assertEqual(first_item.duplicate_key(), second_item.duplicate_key())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -23,11 +23,17 @@ Esta sección no cambia la versión visible ni representa nuevas funcionalidades
 - Añadidos controles de inicio, fin y `Cargar siguientes`.
 - Añadido historial persistente de rangos por URL.
 - Añadida detección de duplicados por identificador de video o URL.
+- Normalizada la URL de respaldo para comparar duplicados sin depender de mayúsculas, fragmentos ni orden de query parameters.
 - Persistidos índice, URL de origen, título de playlist, indicador de Mix e identificador del video.
 - Mejorados los logs de cancelación del análisis de playlists.
+- `Cancelar actual` detiene primero un análisis de playlist activo.
+- Añadido fallback incremental con aviso visible cuando un Mix no respeta el rango solicitado.
+- Rechazados rangos vacíos y bloques manuales superiores a 500 videos.
+- Mejorado el avance de `Cargar siguientes` usando el último índice real procesado.
 - Añadidas pruebas de rangos y claves de duplicados.
 - Añadida automatización del paquete portable y guía de instalación.
 - Mejorado `install_dependencies.bat` para comprobar `winget` e instalar solo dependencias faltantes con confirmación.
+- Verificados tests, compilación, arranque de la aplicación, build PyInstaller, arranque del `.exe` y generación portable.
 
 > Estado: implementado en el working tree; pendiente de validación manual completa y commit/release.
 
