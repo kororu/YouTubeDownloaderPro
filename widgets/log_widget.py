@@ -8,6 +8,8 @@ from pathlib import Path
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
 
+MAX_VISIBLE_LOG_LINES: int = 1200
+
 
 class LogWidget(QWidget):
     """Read-only log area for application messages."""
@@ -83,6 +85,7 @@ class LogWidget(QWidget):
         self._log_output = QPlainTextEdit(self)
         self._log_output.setObjectName("logOutput")
         self._log_output.setReadOnly(True)
+        self._log_output.document().setMaximumBlockCount(MAX_VISIBLE_LOG_LINES)
 
         layout.addLayout(header_layout)
         layout.addWidget(self._log_output, 1)

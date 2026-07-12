@@ -6,6 +6,7 @@ import subprocess
 from dataclasses import dataclass
 
 from core.exceptions import CommandExecutionError
+from core.process import create_text_process
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,21 +42,20 @@ class SubprocessRunner:
         Raises:
             CommandExecutionError: If the process fails or times out.
         """
+        process: subprocess.Popen[str] | None = None
         try:
-            process: subprocess.Popen[str] = subprocess.Popen(
+            process = create_text_process(
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
             )
             stdout, stderr = process.communicate(timeout=timeout_seconds)
         except FileNotFoundError as exc:
             raise CommandExecutionError(f"Command not found: {command[0]}") from exc
         except subprocess.TimeoutExpired as exc:
-            process.kill()
-            stdout, stderr = process.communicate()
+            if process is not None:
+                process.kill()
+                process.communicate()
             raise CommandExecutionError(f"Command timed out: {' '.join(command)}") from exc
 
         result: CommandResult = CommandResult(

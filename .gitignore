@@ -18,6 +18,9 @@ ENV/
 # Packaging and build output
 build/
 dist/
+release/
+build_generated/
+dist_generated/
 *.egg-info/
 *.egg
 pip-wheel-metadata/

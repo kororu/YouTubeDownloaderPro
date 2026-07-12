@@ -19,6 +19,8 @@ class PlaylistVideo:
         duration_seconds: Duration in seconds when available.
         uploader: Uploader name when available.
         thumbnail_url: Thumbnail URL when available.
+        video_id: Stable video identifier when provided by yt-dlp.
+        playlist_title: Playlist or Mix title when provided by yt-dlp.
     """
 
     index: int
@@ -27,6 +29,8 @@ class PlaylistVideo:
     duration_seconds: int | None
     uploader: str | None
     thumbnail_url: str | None
+    video_id: str | None
+    playlist_title: str | None
 
     @classmethod
     def from_entry(cls, index: int, entry: dict[str, Any]) -> Self | None:
@@ -51,6 +55,8 @@ class PlaylistVideo:
             duration_seconds=_read_optional_int(entry, "duration"),
             uploader=_read_optional_string(entry, "uploader"),
             thumbnail_url=_read_optional_string(entry, "thumbnail"),
+            video_id=_read_optional_string(entry, "id"),
+            playlist_title=_read_optional_string(entry, "playlist") or _read_optional_string(entry, "playlist_title"),
         )
 
     def to_video_metadata(self) -> VideoMetadata:

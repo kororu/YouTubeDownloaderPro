@@ -39,6 +39,8 @@ class SettingsWidget(QWidget):
         self._format_combo_box: QComboBox
         self._quality_combo_box: QComboBox
         self._playlist_limit_combo_box: QComboBox
+        self._playlist_start_spin_box: QSpinBox
+        self._playlist_end_spin_box: QSpinBox
         self._max_downloads_spin_box: QSpinBox
         self.setObjectName("settingsWidget")
         self._build_layout()
@@ -55,6 +57,8 @@ class SettingsWidget(QWidget):
         self._format_combo_box.setCurrentText(settings.selected_format)
         self._quality_combo_box.setCurrentText(settings.selected_quality)
         self._playlist_limit_combo_box.setCurrentText(self._format_playlist_limit(settings.max_playlist_items))
+        self._playlist_start_spin_box.setValue(settings.playlist_start_index)
+        self._playlist_end_spin_box.setValue(settings.playlist_end_index)
         self._max_downloads_spin_box.setValue(settings.max_concurrent_downloads)
 
     def _build_layout(self) -> None:
@@ -103,8 +107,17 @@ class SettingsWidget(QWidget):
         self._quality_combo_box.setCurrentText(self._settings.selected_quality)
 
         self._playlist_limit_combo_box = QComboBox(self)
-        self._playlist_limit_combo_box.addItems(("50", "100", "200", "500", "Sin límite"))
+        self._playlist_limit_combo_box.addItems(("50", "100", "200", "500"))
         self._playlist_limit_combo_box.setCurrentText(self._format_playlist_limit(self._settings.max_playlist_items))
+
+        self._playlist_start_spin_box = QSpinBox(self)
+        self._playlist_start_spin_box.setRange(1, 100000)
+        self._playlist_start_spin_box.setValue(self._settings.playlist_start_index)
+
+        self._playlist_end_spin_box = QSpinBox(self)
+        self._playlist_end_spin_box.setRange(0, 100000)
+        self._playlist_end_spin_box.setSpecialValueText("Auto")
+        self._playlist_end_spin_box.setValue(self._settings.playlist_end_index)
 
         self._max_downloads_spin_box = QSpinBox(self)
         self._max_downloads_spin_box.setRange(1, 3)
@@ -115,6 +128,8 @@ class SettingsWidget(QWidget):
         form_layout.addRow("Formato", self._format_combo_box)
         form_layout.addRow("Calidad", self._quality_combo_box)
         form_layout.addRow("Límite playlist", self._playlist_limit_combo_box)
+        form_layout.addRow("Inicio playlist", self._playlist_start_spin_box)
+        form_layout.addRow("Fin playlist", self._playlist_end_spin_box)
         form_layout.addRow("Descargas", self._max_downloads_spin_box)
 
         save_button: QPushButton = QPushButton("Guardar ajustes", self)
@@ -152,21 +167,29 @@ class SettingsWidget(QWidget):
     def _emit_settings_changed(self) -> None:
         """Emit updated settings values."""
         playlist_limit: int = self._parse_playlist_limit()
-        if playlist_limit == 0 and self._settings.max_playlist_items != 0:
+        playlist_start_index: int = self._playlist_start_spin_box.value()
+        playlist_end_index: int = self._playlist_end_spin_box.value()
+        if 0 < playlist_end_index < playlist_start_index:
+            QMessageBox.warning(
+                self,
+                "Rango inválido",
+                "El fin de playlist debe ser mayor o igual al inicio.",
+            )
+            return
+
+        explicit_range_size: int = playlist_end_index - playlist_start_index + 1
+        if playlist_end_index > 0 and explicit_range_size > 500:
             confirmation: QMessageBox.StandardButton = QMessageBox.warning(
                 self,
-                "Confirmar playlist sin límite",
+                "Confirmar rango grande",
                 (
-                    "Procesar playlists sin límite puede ralentizar o bloquear la aplicación.\n\n"
+                    "Procesar rangos grandes puede ralentizar la aplicación.\n\n"
                     "¿Desea guardar esta configuración?"
                 ),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No,
             )
             if confirmation is not QMessageBox.StandardButton.Yes:
-                self._playlist_limit_combo_box.setCurrentText(
-                    self._format_playlist_limit(self._settings.max_playlist_items)
-                )
                 return
 
         updated_settings: Settings = self._settings.with_preferences(
@@ -175,6 +198,8 @@ class SettingsWidget(QWidget):
             selected_quality=self._quality_combo_box.currentText(),
             background_image_path=self._background_image_input.text().strip(),
             max_playlist_items=playlist_limit,
+            playlist_start_index=playlist_start_index,
+            playlist_end_index=playlist_end_index,
             max_concurrent_downloads=self._max_downloads_spin_box.value(),
         )
         self.settings_changed.emit(updated_settings)
@@ -182,13 +207,9 @@ class SettingsWidget(QWidget):
     def _parse_playlist_limit(self) -> int:
         """Read selected playlist limit from the combo box."""
         selected_limit: str = self._playlist_limit_combo_box.currentText()
-        if selected_limit == "Sin límite":
-            return 0
         return int(selected_limit)
 
     @staticmethod
     def _format_playlist_limit(max_playlist_items: int) -> str:
         """Format a playlist limit for display."""
-        if max_playlist_items == 0:
-            return "Sin límite"
         return str(max_playlist_items)

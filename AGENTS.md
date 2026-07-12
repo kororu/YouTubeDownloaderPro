@@ -6,7 +6,7 @@
 
 Project name: YouTube Downloader Pro
 Author: Ariel Ponce
-Visible version: v0.2.0
+Visible version: v0.3.0
 Target platform: Windows
 Final distribution: PyInstaller executable
 Main technology stack: Python, PySide6, QThread, subprocess.Popen, yt-dlp, ffmpeg, JSON, QSS
@@ -182,7 +182,7 @@ The footer must visibly show:
 
 ```text
 Autor: Ariel Ponce
-Versión: v0.2.0
+Versión: v0.3.0
 ```
 
 Initial main window:
@@ -217,7 +217,7 @@ The panel must include a copy button.
 
 ---
 
-## Functional Roadmap
+## Baseline Product Capabilities
 
 The final application must support:
 
@@ -251,7 +251,62 @@ The final application must support:
 
 ---
 
-## Sprint 1 — Infrastructure
+## Roadmap oficial hasta v1.0.0
+
+La versión visible permanece en `v0.3.0`. Cada entrada del roadmap debe identificarse como implementada, en progreso, planificada o sugerida. Nunca se debe presentar una función planificada como implementada.
+
+### Estado actual — v0.3.0
+
+Implementado en el working tree, pero pendiente de validación manual completa y release:
+
+* Ejecución silenciosa de procesos `yt-dlp` y `ffmpeg` en Windows.
+* Inicio centralizado de subprocess con `CREATE_NO_WINDOW`.
+* Carga por rangos de playlists y YouTube Mix.
+* Rangos como `1-200`, `201-400` y `401-600`.
+* `Cargar siguientes` con progreso por URL.
+* Prevención de duplicados por identificador de video o URL.
+* Mejoras de cancelación y logs de progreso de playlists.
+* Preparación del paquete portable.
+
+Todavía se requiere validación manual de descargas MP4/MP3 reales, playlists y Mix grandes, ejecución silenciosa desde el `.exe` y uso del portable en otro PC Windows.
+
+### Releases planificadas
+
+* `v0.4.0 — Queue and playlist advanced management`: orden, prioridades, pausa/reanudación, reintentos, limpieza, progreso por playlist, detección de archivos descargados, importación/exportación de cola e historial básico.
+* `v0.5.0 — Audio and format improvements`: MP3, M4A, OPUS, FLAC, WAV, best audio, perfiles de calidad, miniaturas, metadata, subtítulos, plantillas de nombres y carpetas por canal o playlist.
+* `v0.6.0 — Visual polish and UX`: toolbar agrupada o en dos filas, correcciones de espaciado y recorte, controles mejorados, fondo adaptable, opacidad, modo compacto, miniaturas, iconos, pantallas vacías, tooltips y atajos.
+* `v0.7.0 — Download history and duplicate control`: historial buscable, control de duplicados, acciones sobre archivos, reintentos, favoritos e importación/exportación.
+* `v0.8.0 — Advanced settings and diagnostics`: ancho de banda cuando sea compatible, concurrencia, cookies opcionales con advertencias, proxy, diagnóstico, dependencias, reset e importación/exportación de ajustes.
+* `v0.9.0 — Installer and release candidate`: instalador opcional, ZIP portable, accesos directos, icono y metadata finales, documentación, pruebas en un PC limpio y correcciones finales.
+* `v1.0.0 — Stable Windows release`: ejecutable y portable estables, documentación completa, errores robustos, descargas silenciosas, playlists por rango y YouTube Mix estables, audio avanzado con WAV, historial e interfaz clara.
+
+### Versiones futuras después de v1.0
+
+* `v1.1 — Multi-source downloads`: evaluar Facebook, X/Twitter, TikTok, Vimeo, Instagram, SoundCloud, clips/VOD de Twitch y otras fuentes compatibles con `yt-dlp`; detectar el origen y advertir sobre cookies o sesión. No se debe prometer soporte absoluto porque los sitios y `yt-dlp` cambian.
+* `v1.2 — Site profiles`: opciones por plataforma, cookies opcionales, errores específicos y ayuda por fuente.
+* `v1.3 — Scheduler and automation`: descargas programadas, apagado al finalizar, inicio opcional con Windows y modo de bajo consumo.
+* `v1.4 — Remote companion`: evaluar una app Android que controle por WiFi/5G la cola de Windows mientras el PC ejecuta `yt-dlp` y `ffmpeg`.
+* `v2.0 — Android evaluation`: evaluar una aplicación Kotlin, Java o Flutter separada, con avisos de datos móviles, modo solo WiFi, gestión de cambios de red, almacenamiento y descargas en segundo plano permitidas. No reutilizar PySide6/PyInstaller en Android.
+
+### Guía sobre WAV
+
+WAV está planificado para `v0.5.0` mediante `yt-dlp` y FFmpeg. Genera archivos grandes sin compresión, pero no restaura calidad ya perdida en una fuente comprimida. Es útil para edición porque evita otra compresión con pérdida. Para uso normal, MP3, M4A u OPUS suelen ser más prácticos; se debe elegir best audio, FLAC o WAV según la necesidad real.
+
+### Uso responsable
+
+La aplicación es un frontend para `yt-dlp` y `ffmpeg`. Los usuarios deben respetar derechos de autor, términos de servicio y legislación aplicable. El proyecto debe priorizar contenido propio, libre, educativo o autorizado y no debe promover descargas no autorizadas de contenido protegido.
+
+El detalle se mantiene en `PROJECT.md`, el progreso en `PROJECT_STATUS.md` y las tareas en `TODO.md`.
+
+---
+
+## Plan histórico de commits
+
+El siguiente plan de Sprints 1–7 registra el camino original hasta la primera aplicación empaquetada. Es una referencia histórica, no el roadmap vigente. No se debe seleccionar un commit antiguo de esta sección como próxima tarea; se debe usar el roadmap oficial y la solicitud explícita del usuario.
+
+---
+
+## Sprint 1 — Infrastructure (historical)
 
 Sprint goal:
 
@@ -481,7 +536,7 @@ Requirements:
 * Footer must show:
 
   * Autor: Ariel Ponce
-  * Versión: v0.2.0
+  * Versión: v0.3.0
 * Do not implement download logic yet.
 * Do not use QTreeWidget.
 * QueueWidget must be based on QScrollArea.
@@ -752,20 +807,20 @@ git push
 When asked to continue:
 
 1. Read `AGENTS.md`.
-2. Identify the next pending commit.
-3. Modify only files required for that commit.
+2. Read `PROJECT_STATUS.md` and identify the requested current roadmap item.
+3. Modify only files required for that item.
 4. Keep the project runnable.
 5. Validate imports.
 6. Summarize:
 
-   * commit number
+   * roadmap version or requested scope
    * description
    * created files
    * modified files
    * validation result
-7. Stop after completing the requested commit unless explicitly asked to continue.
+7. Stop after completing the requested item unless explicitly asked to continue.
 
-Do not continue into the next commit without instruction.
+Do not continue into the next roadmap item without instruction.
 
 ---
 

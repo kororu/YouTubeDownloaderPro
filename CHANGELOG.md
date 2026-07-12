@@ -1,66 +1,53 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+Todos los cambios relevantes del proyecto se documentan en este archivo.
+
+## Upcoming
+
+### Documentación
+
+- Documentado el estado real de `v0.3.0`, incluidas las mejoras presentes en el working tree y sus validaciones pendientes.
+- Incorporado el roadmap oficial desde `v0.3.0` hasta la versión estable `v1.0.0`.
+- Añadidas propuestas post-`v1.0` para fuentes adicionales compatibles con `yt-dlp`, perfiles por sitio, automatización, control remoto y evaluación de Android.
+- Añadida una explicación sobre WAV, audio sin compresión y sus limitaciones de calidad y tamaño.
+- Añadida una nota de uso responsable y cumplimiento de derechos de autor, términos de servicio y legislación aplicable.
+
+Esta sección no cambia la versión visible ni representa nuevas funcionalidades implementadas.
+
+## v0.3.0 - 2026-07-07
+
+- Actualizada la versión visible y la metadata de release a v0.3.0.
+- Añadida configuración oculta de procesos de Windows para flujos de `yt-dlp` y `ffmpeg`.
+- Centralizado el inicio de procesos externos en `core/process.py`.
+- Añadida carga por rangos de playlists y YouTube Mix mediante `--playlist-start` y `--playlist-end`.
+- Añadidos controles de inicio, fin y `Cargar siguientes`.
+- Añadido historial persistente de rangos por URL.
+- Añadida detección de duplicados por identificador de video o URL.
+- Persistidos índice, URL de origen, título de playlist, indicador de Mix e identificador del video.
+- Mejorados los logs de cancelación del análisis de playlists.
+- Añadidas pruebas de rangos y claves de duplicados.
+- Añadida automatización del paquete portable y guía de instalación.
+- Mejorado `install_dependencies.bat` para comprobar `winget` e instalar solo dependencias faltantes con confirmación.
+
+> Estado: implementado en el working tree; pendiente de validación manual completa y commit/release.
 
 ## v0.2.0 - 2026-07-07
 
-- Updated visible application version and release metadata to v0.2.0.
-- Forced permanent dark mode and removed the light theme selector from settings.
-- Fixed style and resource path resolution for PyInstaller runtime.
-- Added optional persisted background image support with dark readability overlay.
-- Added incremental playlist and YouTube Mix loading through yt-dlp JSON line streaming.
-- Added playlist progress logging and progressive queue insertion for large playlists.
-- Added safe playlist cancellation through the existing cancel-all flow.
-- Improved background image visibility with darker translucent overlays and readable controls.
-- Removed the permanent visual dependency panel from the main sidebar.
-- Added persisted playlist and YouTube Mix item limits with a default of 200 videos.
-- Added batch-based playlist queue insertion to reduce UI pressure on large mixes.
-- Added safer logs for large playlist detection, configured limits, cancellation, and limit stops.
+- Establecido el tema dark permanente y retirada la selección de tema light.
+- Corregida la resolución de estilos y recursos en PyInstaller.
+- Añadido fondo opcional persistente con capa de legibilidad.
+- Añadida carga incremental de playlists y YouTube Mix.
+- Añadidos progreso, inserción por lotes, cancelación segura y límites configurables.
+- Acotado el log visible y reforzado el streaming para listas grandes.
+- Retirado el panel permanente de dependencias de la barra lateral.
+- Añadidas pruebas unitarias para ajustes, URLs, comandos y progreso.
 
 ## v0.1.0 - 2026-07-07
 
-- Created the initial project scaffold.
-- Added the PySide6 application entry point.
-- Added project documentation and architecture notes.
-- Added Python, VS Code, and PyInstaller ignore rules.
-- Added application infrastructure, metadata, and dark theme loading.
-- Added JSON settings persistence with safe defaults and invalid JSON recovery.
-- Added path, environment, dependency, resource, theme, and logging infrastructure.
-- Added a base main window shell with toolbar, queue, log, status, footer, and dependency notice areas.
-- Added window size and position persistence.
-- Added toolbar controls for URL entry, format selection, quality selection, settings, and about actions.
-- Added queue item widgets, queue selection, removal, search, and sorting interactions.
-- Added settings, log, status, and about interface components.
-- Stabilized Sprint 2 documentation and UI integration.
-- Added download domain enums and queue item domain models.
-- Added yt-dlp command generation for metadata and future download commands.
-- Added subprocess runner foundation.
-- Added video metadata extraction service using yt-dlp JSON output.
-- Added QThread metadata worker infrastructure.
-- Added URL validation, error handling, and metadata loading integration.
-- Stabilized Sprint 3 documentation and imports.
-- Added playlist metadata models and playlist video selection models.
-- Added playlist metadata extraction using yt-dlp JSON output.
-- Added PlaylistDialog for selecting playlist videos.
-- Added playlist selection integration that adds selected videos to the queue.
-- Added playlist error handling and Sprint 4 documentation.
-- Added download queue service with up to three simultaneous downloads.
-- Added download worker using yt-dlp through subprocess.Popen.
-- Added yt-dlp progress parsing and UI progress updates.
-- Added MP4 and MP3 download execution using selected format and quality.
-- Added output folder usage from persisted settings.
-- Added cancel current and cancel all download actions.
-- Stabilized Sprint 5 documentation and queue integration.
-- Added JSON queue persistence and queue restoration on startup.
-- Improved settings persistence with atomic file replacement.
-- Added clearer user-facing error messages.
-- Improved empty queue states and visual polish.
-- Added keyboard shortcuts for queue and log actions.
-- Added visible log export.
-- Stabilized Sprint 6 documentation and UI behavior.
-- Added PyInstaller packaging specification for the Windows executable.
-- Added Windows build automation script.
-- Added Windows version metadata for release builds.
-- Added application icon asset and startup icon loading.
-- Added release documentation for building and validating v0.1.0.
-- Completed the v0.1.0 release preparation.
+- Creada la base del proyecto, arquitectura modular y aplicación PySide6.
+- Añadidos ajustes y cola persistentes, infraestructura, tema, logging y recursos.
+- Añadidos toolbar, cola personalizada, logs, estado, ajustes y diálogos.
+- Añadidos modelos, extracción de metadata, playlists y workers con QThread.
+- Añadida ejecución de descargas MP4/MP3, progreso y cancelación.
+- Añadidos controles de cola, mensajes de error, atajos y exportación de logs.
+- Añadidos especificación PyInstaller, script de build, metadata e icono.

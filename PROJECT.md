@@ -1,19 +1,14 @@
-# Project Architecture
+# Visión y arquitectura del proyecto
 
-YouTube Downloader Pro follows a modular clean architecture style. The project separates application startup, domain concepts, services, presentation code, styling, resources, packaging, and tests so each area can evolve independently.
+YouTube Downloader Pro es un frontend de escritorio para `yt-dlp` y `ffmpeg`. Su objetivo es ofrecer una experiencia Windows profesional, modular y distribuible mediante PyInstaller, sin ocultar que la compatibilidad con fuentes externas depende de las herramientas y sitios subyacentes.
 
-## Structure
+Versión visible actual: `v0.3.0`.
+
+## Arquitectura
 
 ```text
 YouTubeDownloaderPro/
     app.py
-    requirements.txt
-    README.md
-    CHANGELOG.md
-    PROJECT.md
-    TODO.md
-    AGENTS.md
-    .gitignore
     config/
     core/
     models/
@@ -24,102 +19,184 @@ YouTubeDownloaderPro/
     resources/
     styles/
     downloads/
+    scripts/
     tests/
 ```
 
-## Layers
+- `config`: configuración tipada y persistencia JSON.
+- `core`: ciclo de vida, constantes, paths, entorno, dependencias, procesos y logging.
+- `models`: modelos y enums del dominio sin dependencias de UI.
+- `services`: metadata, playlists, cola, descarga, persistencia e integración con procesos externos.
+- `ui`, `widgets` y `dialogs`: composición y presentación PySide6.
+- `resources` y `styles`: assets, resolución segura de recursos y QSS.
+- `scripts`: build y empaquetado portable de Windows.
+- `tests`: validaciones automatizadas.
 
-- `app.py`: Delegates process startup to the application container.
-- `config`: Stores typed application configuration and JSON-backed user settings.
-- `core`: Contains application lifecycle, constants, paths, environment detection, dependency checks, and logging.
-- `models`: Contains typed domain and data models.
-- `services`: Contains integrations and business services, such as future download, validation, metadata, and persistence services.
-- `ui`: Contains main windows, screens, and presentation composition.
-- `widgets`: Contains reusable PySide6 widgets for the main shell.
-- `dialogs`: Contains dialog windows and modal workflows.
-- `resources`: Contains application assets and safe resource resolution helpers.
-- `styles`: Contains Qt style sheets and centralized theme management.
-- `downloads`: Provides the default local download target folder.
-- `tests`: Contains automated tests.
+La UI no debe contener lógica directa de descarga, persistencia o `subprocess`. Los servicios deben permanecer independientes de widgets y la infraestructura externa debe estar centralizada.
 
-## Sprint 1 Infrastructure
+## Estado funcional
 
-- `Application` encapsulates `QApplication`, metadata, theme application, settings loading, logging, and main window startup.
-- `SettingsManager` persists user settings as JSON in the user configuration directory.
-- `DependencyChecker` verifies `yt-dlp` and `ffmpeg` availability through the system `PATH`.
-- `ThemeManager` centralizes QSS loading and applies the configured theme safely.
-- `ResourceManager` resolves optional icons, images, styles, and fonts without crashing when files are absent.
-- `MainWindow` provides the base shell and persists window geometry on close.
+### Implementado
 
-## Sprint 2 Interface
+- Shell PySide6, tema dark, fondo opcional, cola personalizada, logs, estado y ajustes.
+- Descargas MP4/MP3 con selector de calidad y carpeta de salida.
+- Persistencia de ajustes y cola.
+- Videos individuales, playlists y YouTube Mix con carga incremental.
+- Build PyInstaller `onedir` y flujo de paquete portable.
 
-- `ToolbarWidget` provides URL entry, format and quality controls, and high-level actions.
-- `QueueWidget` uses `QScrollArea` with `QueueItemWidget` instances for queue display.
-- Queue interactions support add, remove, select all, deselect all, search, and sort operations without download execution.
-- `SettingsWidget` edits persisted user preferences through the configuration layer.
-- `LogWidget` and `StatusWidget` provide visible application feedback.
-- `AboutDialog` displays application metadata without coupling to download services.
+### En progreso
 
-## Sprint 3 Metadata Engine
+El working tree de `v0.3.0` contiene ejecución silenciosa, rangos de playlist, `Cargar siguientes`, historial por URL y deduplicación. Se requiere validación manual de descargas reales, listas grandes y portable antes de declarar la versión estable.
 
-- `models` contains download enums, queue item state, and extracted video metadata.
-- `YtDlpCommandBuilder` builds command arguments without executing them.
-- `SubprocessRunner` centralizes external command execution and output capture.
-- `VideoMetadataService` extracts single-video metadata through `yt-dlp --dump-single-json`.
-- `MetadataWorker` loads metadata on a `QThread` so the UI remains responsive.
-- `UrlValidator` validates user-entered URLs before service execution.
-- UI integration adds metadata-backed queue entries and reports dependency or extraction errors without starting downloads.
+### Problemas recientes que guían el roadmap
 
-## Sprint 4 Playlists
+- Ventanas emergentes de `yt-dlp`/FFmpeg y necesidad de ejecución silenciosa.
+- Listas grandes que requieren rangos, bloques y cancelación segura.
+- Logs de progreso que deben ser claros y acotados.
+- Layout superior congestionado, controles cortados y mejoras visuales pendientes.
+- Empaquetado portable que debe validarse fuera del equipo de desarrollo.
 
-- `PlaylistMetadata` and `PlaylistVideo` model playlist analysis results.
-- `PlaylistMetadataService` extracts playlist data through `yt-dlp --dump-single-json`.
-- `PlaylistWorker` runs playlist analysis on a `QThread`.
-- Playlist entries are added to the queue as ready metadata-backed items.
-- Playlist dependency and extraction errors are reported through the existing log and status widgets.
+## Roadmap oficial hasta v1.0.0
 
-## Sprint 5 Downloads
+### v0.3.0 - Silent downloads and playlist ranges
 
-- `DownloadQueueService` coordinates pending items and active workers with a maximum concurrency of three.
-- `DownloadWorker` runs real `yt-dlp` commands in a `QThread` using `subprocess.Popen`.
-- `ProgressParser` converts yt-dlp progress output into typed progress updates.
-- MP4 and MP3 commands are generated by `YtDlpCommandBuilder`.
-- The output folder comes from persisted settings and can be changed in `SettingsWidget`.
-- The toolbar starts selected queue items and cancels current or all queued downloads.
-- Download state and progress are reflected in `QueueWidget`, `QueueItemWidget`, `LogWidget`, and `StatusWidget`.
+Objetivo: estabilizar la ejecución silenciosa y el procesamiento incremental de listas grandes.
 
-## Sprint 6 Polish
+- Ocultar ventanas emergentes de `yt-dlp` y FFmpeg.
+- Centralizar procesos con `CREATE_NO_WINDOW` en Windows.
+- Cargar rangos `1-200`, `201-400`, `401-600` y otros rangos válidos.
+- Incorporar `Cargar siguientes` e historial por URL.
+- Evitar duplicados en la cola.
+- Mejorar cancelación, logs y soporte de YouTube Mix grandes.
 
-- `QueuePersistenceService` stores queue items as JSON and restores them on startup.
-- Settings writes use atomic replacement when supported by the filesystem.
-- Main window actions include keyboard shortcuts for downloading, cancelling, selecting, and exporting logs.
-- Error messages are converted into clearer user-facing text before reaching the UI.
-- Empty queue state, menu styling, queue item progress, and error styling are refined in QSS.
-- `LogWidget` can export the visible session log to a text file.
+Estado: implementado en el working tree; pendiente de validación manual completa y release.
 
-## Sprint 7 Release
+### v0.4.0 - Queue and playlist advanced management
 
-- `YouTubeDownloaderPro.spec` defines the PyInstaller Windows package and includes styles and resources.
-- `scripts/build_windows.ps1` builds the executable and validates the expected output path.
-- `resources/version_info.txt` provides Windows version metadata for the packaged executable.
-- `resources/icons/app_icon.svg` is loaded through `ResourceManager` during application startup.
-- `RELEASE.md` documents release requirements, build steps, and validation commands for v0.2.0.
+Objetivo: convertir la cola en una herramienta de gestión recuperable.
 
-## v0.2.0 Improvements
+- Reordenar videos y establecer prioridades.
+- Pausar/reanudar la cola y reintentar fallidos.
+- Limpiar completados o errores.
+- Guardar progreso por playlist y detectar archivos ya descargados.
+- Exportar/importar cola.
+- Introducir historial básico.
 
-- The application always applies `styles/dark_theme.qss`; the legacy settings `theme` field is preserved only for compatibility and normalized to `dark`.
-- `BackgroundWidget` paints an optional user-selected background image with a dark overlay while storing only the selected file path.
-- `PlaylistStreamService` streams playlist and YouTube Mix entries incrementally through `yt-dlp --flat-playlist --dump-json`.
-- `PlaylistStreamService` enforces the configured playlist limit before huge mixes can overload the UI.
-- `PlaylistWorker` emits progress and batch signals from a `QThread`, keeping playlist processing outside the UI thread.
-- `MainWindow` adds playlist videos to the queue in small batches and defers queue persistence until streaming completes.
-- Dependency availability remains checked internally, but missing tools are reported through log/status instead of a fixed sidebar panel.
-- PyInstaller runtime path resolution uses `_MEIPASS` so packaged resources and styles load correctly.
+Estado: planificado.
 
-## Engineering Standards
+### v0.5.0 - Audio and format improvements
 
-- Python 3.12+ is the supported runtime.
-- Public functions, methods, and modules must include type hints.
-- Production code should use Google style docstrings where documentation clarifies behavior.
-- UI code should remain separate from domain and service logic.
-- No placeholder implementations, pseudocode, or TODO comments should be committed.
+Objetivo: ampliar formatos y control de salida.
+
+- MP3, M4A, OPUS, FLAC y WAV.
+- `Audio original / best audio` cuando la fuente lo permita.
+- Perfiles original/best, 128, 192, 256 y 320 kbps.
+- Miniaturas, metadata y subtítulos disponibles.
+- Plantillas de nombres y carpetas opcionales por canal o playlist.
+
+WAV será una opción orientada principalmente a edición: es audio sin compresión, ocupa mucho espacio y no restaura calidad ya perdida en una fuente comprimida. Puede evitar una segunda compresión, pero no constituye una mejora mágica. Para uso común, MP3/M4A/OPUS suelen ser preferibles; `best audio`, FLAC o WAV deben elegirse según el objetivo.
+
+Estado: planificado.
+
+### v0.6.0 - Visual polish and UX
+
+Objetivo: hacer la interfaz más ordenada, adaptable y legible.
+
+- Barra superior en dos filas o grupos y mejor separación de acciones.
+- Corrección de textos cortados, combos y desplegables.
+- Fondo con escalado automático y opacidad configurable.
+- Modo compacto y vista de cola mejorada.
+- Miniaturas en `QueueItemWidget`, iconos por estado, pantalla vacía, tooltips y atajos.
+
+Estado: planificado.
+
+### v0.7.0 - Download history and duplicate control
+
+Objetivo: ofrecer trazabilidad completa de descargas.
+
+- Historial buscable y prevención de duplicados.
+- Abrir carpeta, copiar ruta y reintentar desde historial.
+- Favoritos e importación/exportación del historial.
+
+Estado: planificado.
+
+### v0.8.0 - Advanced settings and diagnostics
+
+Objetivo: cubrir escenarios avanzados sin degradar la experiencia básica.
+
+- Límite de ancho de banda si `yt-dlp` lo admite.
+- Concurrencia configurable.
+- Cookies opcionales del navegador con advertencias y proxy personalizado.
+- Logs exportables, modo diagnóstico y verificación avanzada de dependencias.
+- Reset e importación/exportación de configuración.
+
+Estado: planificado.
+
+### v0.9.0 - Installer and release candidate
+
+Objetivo: validar una distribución candidata a estable.
+
+- Evaluar un instalador real y mantener un ZIP portable.
+- Accesos directos, icono y metadata definitivos.
+- Documentación de usuario final.
+- Pruebas en otro PC y del `.exe` sin VS Code.
+- Corrección final de defectos.
+
+Estado: planificado.
+
+### v1.0.0 - Stable Windows release
+
+Objetivo: entregar una aplicación Windows estable y lista para compartir.
+
+- Ejecutable y portable estables.
+- Documentación y changelog completos.
+- Manejo robusto de errores y descargas silenciosas.
+- Playlists por rango y YouTube Mix estables.
+- Audio avanzado, incluido WAV.
+- Historial y control de duplicados.
+- Interfaz ordenada y legible.
+
+Estado: planificado; no representa la funcionalidad actual.
+
+## Futuras versiones después de v1.0
+
+### v1.1 - Multi-source downloads
+
+Evaluar URLs de Facebook, X/Twitter, TikTok, Vimeo, Instagram, SoundCloud, clips/VOD de Twitch y otras fuentes compatibles con `yt-dlp`. La aplicación debería detectar el origen y avisar si se necesitan cookies o sesión. No se promete soporte absoluto: depende de `yt-dlp`, las condiciones de cada plataforma y sus cambios técnicos.
+
+### v1.2 - Site profiles
+
+Perfiles y opciones por plataforma, cookies opcionales, detección de errores y mensajes de ayuda específicos por fuente.
+
+### v1.3 - Scheduler and automation
+
+Programación horaria, apagado al finalizar, inicio opcional de cola con Windows y modo de bajo consumo.
+
+### v1.4 - Remote companion
+
+Evaluar una aplicación Android complementaria que controle por WiFi/5G el programa Windows. En una primera etapa, `yt-dlp` y FFmpeg continuarían ejecutándose en el PC.
+
+### v2.0 - Android evaluation
+
+Evaluar una aplicación Android separada, sin reutilizar PySide6/PyInstaller, con Kotlin, Java o Flutter. Considerar WiFi/5G, avisos y restricciones de datos móviles, modo solo WiFi, cambios de red, almacenamiento y ejecución en segundo plano permitida por Android.
+
+Todas las versiones post-`v1.0` son sugerencias sujetas a investigación técnica, legal y de mantenimiento.
+
+## Distribución y dependencias
+
+- PyInstaller `onedir` es el formato actual.
+- `yt-dlp` y FFmpeg permanecen como dependencias externas en `PATH`.
+- La aplicación no debe instalarlos automáticamente ni empaquetarlos sin una decisión explícita futura.
+- El portable debe verificarse en un sistema Windows independiente antes de publicarse.
+
+## Uso responsable
+
+YouTube Downloader Pro es un frontend para `yt-dlp` y `ffmpeg`. El usuario es responsable de respetar derechos de autor, términos de servicio y legislación aplicable. El uso recomendado se limita a contenido propio, libre, educativo o descargado con autorización.
+
+## Estándares de ingeniería
+
+- Python 3.12+, PySide6, type hints y docstrings Google cuando aporten claridad.
+- Clean Architecture y módulos con responsabilidades definidas.
+- Sin pseudocódigo, placeholders ni instalaciones automáticas.
+- Cambios pequeños, verificables y compatibles con el historial.
+- Ninguna función se marca como estable sin pruebas confirmadas.

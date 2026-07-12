@@ -18,6 +18,8 @@ class Settings:
         theme: Active visual theme name, forced to dark for compatibility.
         background_image_path: Optional custom application background image path.
         max_playlist_items: Maximum playlist or YouTube Mix videos processed per request.
+        playlist_start_index: Default one-based playlist start index.
+        playlist_end_index: Optional default playlist end index, or 0 for automatic limit.
         window_width: Main window width in pixels.
         window_height: Main window height in pixels.
         window_x: Main window horizontal screen position.
@@ -31,6 +33,8 @@ class Settings:
     theme: str
     background_image_path: str
     max_playlist_items: int
+    playlist_start_index: int
+    playlist_end_index: int
     window_width: int
     window_height: int
     window_x: int
@@ -51,6 +55,8 @@ class Settings:
             theme="dark",
             background_image_path="",
             max_playlist_items=200,
+            playlist_start_index=1,
+            playlist_end_index=0,
             window_width=1400,
             window_height=900,
             window_x=100,
@@ -69,6 +75,13 @@ class Settings:
             A validated settings instance.
         """
         defaults: Settings = cls.defaults()
+        playlist_start_index: int = _read_int(
+            data,
+            "playlist_start_index",
+            defaults.playlist_start_index,
+            1,
+            100000,
+        )
         return cls(
             output_folder=_read_string(data, "output_folder", defaults.output_folder),
             selected_format=_read_choice(
@@ -86,6 +99,12 @@ class Settings:
             theme="dark",
             background_image_path=_read_background_image_path(data, defaults.background_image_path),
             max_playlist_items=_read_playlist_limit(data, defaults.max_playlist_items),
+            playlist_start_index=playlist_start_index,
+            playlist_end_index=_read_playlist_end_index(
+                data,
+                defaults.playlist_end_index,
+                playlist_start_index,
+            ),
             window_width=_read_int(data, "window_width", defaults.window_width, 1100, 10000),
             window_height=_read_int(data, "window_height", defaults.window_height, 700, 10000),
             window_x=_read_int(data, "window_x", defaults.window_x, -10000, 10000),
@@ -134,6 +153,8 @@ class Settings:
         selected_quality: str,
         background_image_path: str,
         max_playlist_items: int,
+        playlist_start_index: int,
+        playlist_end_index: int,
         max_concurrent_downloads: int,
     ) -> Self:
         """Create settings with updated user preferences.
@@ -144,6 +165,8 @@ class Settings:
             selected_quality: Preferred media quality.
             background_image_path: Optional custom application background image path.
             max_playlist_items: Maximum playlist or YouTube Mix videos processed per request.
+            playlist_start_index: Default one-based playlist start index.
+            playlist_end_index: Optional playlist end index, or 0 for automatic limit.
             max_concurrent_downloads: Maximum simultaneous downloads.
 
         Returns:
@@ -159,6 +182,8 @@ class Settings:
             theme="dark",
             background_image_path=normalized_background_image_path,
             max_playlist_items=_normalize_playlist_limit(max_playlist_items),
+            playlist_start_index=max(1, playlist_start_index),
+            playlist_end_index=_normalize_playlist_end_index(playlist_end_index, playlist_start_index),
             max_concurrent_downloads=max(1, min(3, max_concurrent_downloads)),
         )
 
@@ -212,9 +237,26 @@ def _read_playlist_limit(data: dict[str, Any], default: int) -> int:
 
 def _normalize_playlist_limit(value: int) -> int:
     """Normalize playlist limits to supported values."""
-    if value in {0, 50, 100, 200, 500}:
+    if value in {50, 100, 200, 500}:
         return value
     return 200
+
+
+def _read_playlist_end_index(data: dict[str, Any], default: int, start_index: int) -> int:
+    """Read an optional playlist end index."""
+    value: Any = data.get("playlist_end_index")
+    if isinstance(value, int):
+        return _normalize_playlist_end_index(value, start_index)
+    return default
+
+
+def _normalize_playlist_end_index(value: int, start_index: int) -> int:
+    """Normalize an optional playlist end index."""
+    if value == 0:
+        return 0
+    if value >= start_index:
+        return min(value, 100000)
+    return 0
 
 
 def _read_int(

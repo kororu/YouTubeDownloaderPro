@@ -10,13 +10,16 @@ from typing import Any
 
 from core.dependency_checker import DependencyChecker
 from core.exceptions import CommandExecutionError, DependencyUnavailableError, MetadataExtractionError
+from core.process import create_text_process, request_process_termination, wait_for_process
 from models.playlist_metadata import PlaylistVideo
+from models.playlist_range import PlaylistRange
 from services.yt_dlp_command_builder import YtDlpCommandBuilder
 
 
 PlaylistBatchCallback = Callable[[tuple[PlaylistVideo, ...], int, int | None], None]
 PlaylistTotalCallback = Callable[[int], None]
 PlaylistLimitCallback = Callable[[int, int], None]
+MAX_DIAGNOSTIC_LINES: int = 20
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,7 +59,7 @@ class PlaylistStreamService:
     def stream_playlist(
         self,
         source_url: str,
-        max_items: int,
+        playlist_range: PlaylistRange,
         batch_size: int,
         batch_loaded: PlaylistBatchCallback,
         total_detected: PlaylistTotalCallback,
@@ -66,11 +69,11 @@ class PlaylistStreamService:
 
         Args:
             source_url: Source playlist or YouTube Mix URL.
-            max_items: Maximum videos to emit, or 0 for no configured limit.
+            playlist_range: One-based inclusive range to emit.
             batch_size: Number of videos emitted per batch.
             batch_loaded: Callback called for each batch of selectable videos.
             total_detected: Callback called when yt-dlp exposes a total count.
-            limit_reached: Callback called when the configured limit is reached.
+            limit_reached: Callback retained for compatibility with older callers.
 
         Returns:
             Streaming result.
@@ -80,26 +83,58 @@ class PlaylistStreamService:
             MetadataExtractionError: If no selectable videos are found.
             CommandExecutionError: If yt-dlp fails.
         """
+        self._cancel_requested = False
         dependency_result = self._dependency_checker.check()
         if not dependency_result.yt_dlp.is_available:
             raise DependencyUnavailableError("yt-dlp is not available in PATH.")
 
-        command: list[str] = self._command_builder.build_playlist_stream_command(source_url)
+        try:
+            return self._stream_playlist_once(
+                source_url=source_url,
+                playlist_range=playlist_range,
+                batch_size=batch_size,
+                batch_loaded=batch_loaded,
+                total_detected=total_detected,
+                use_ytdlp_range=True,
+            )
+        except CommandExecutionError:
+            if self._cancel_requested:
+                raise
+            return self._stream_playlist_once(
+                source_url=source_url,
+                playlist_range=playlist_range,
+                batch_size=batch_size,
+                batch_loaded=batch_loaded,
+                total_detected=total_detected,
+                use_ytdlp_range=False,
+            )
+
+    def _stream_playlist_once(
+        self,
+        source_url: str,
+        playlist_range: PlaylistRange,
+        batch_size: int,
+        batch_loaded: PlaylistBatchCallback,
+        total_detected: PlaylistTotalCallback,
+        use_ytdlp_range: bool,
+    ) -> PlaylistStreamResult:
+        """Stream a playlist once, optionally using yt-dlp range options."""
+        command: list[str] = self._command_builder.build_playlist_stream_command(
+            source_url,
+            playlist_range if use_ytdlp_range else None,
+        )
         processed_count: int = 0
+        scanned_count: int = 0
         detected_total: int | None = None
-        emitted_limit_warning: bool = False
-        stopped_at_limit: bool = False
+        stopped_at_range_end: bool = False
         pending_batch: list[PlaylistVideo] = []
-        stderr_text: str = ""
+        diagnostic_lines: list[str] = []
 
         try:
-            self._process = subprocess.Popen(
+            self._process = create_text_process(
                 command,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
+                stderr=subprocess.STDOUT,
                 bufsize=1,
             )
         except FileNotFoundError as exc:
@@ -117,22 +152,31 @@ class PlaylistStreamService:
 
                 entry: dict[str, Any] | None = self._parse_json_line(line)
                 if entry is None:
+                    self._append_diagnostic_line(diagnostic_lines, line)
                     continue
 
                 new_total: int | None = self._read_playlist_total(entry)
                 if new_total is not None and new_total != detected_total:
                     detected_total = new_total
                     total_detected(new_total)
-                    if max_items > 0 and new_total > max_items and not emitted_limit_warning:
-                        emitted_limit_warning = True
-                        limit_reached(new_total, max_items)
 
-                if max_items > 0 and processed_count >= max_items:
-                    stopped_at_limit = True
-                    self.cancel()
+                scanned_count += 1
+                entry_index: int = self._read_playlist_index(
+                    entry,
+                    scanned_count,
+                    playlist_range.start_index,
+                    use_ytdlp_range,
+                )
+
+                if entry_index < playlist_range.start_index:
+                    continue
+                if entry_index > playlist_range.end_index:
+                    stopped_at_range_end = True
+                    if self._process is not None:
+                        request_process_termination(self._process)
                     break
 
-                video: PlaylistVideo | None = PlaylistVideo.from_entry(processed_count + 1, entry)
+                video: PlaylistVideo | None = PlaylistVideo.from_entry(entry_index, entry)
                 if video is None:
                     continue
 
@@ -141,11 +185,6 @@ class PlaylistStreamService:
                 if len(pending_batch) >= max(1, batch_size):
                     batch_loaded(tuple(pending_batch), processed_count, detected_total)
                     pending_batch.clear()
-
-                if max_items > 0 and processed_count >= max_items:
-                    stopped_at_limit = True
-                    self.cancel()
-                    break
         finally:
             if self._process.stdout is not None:
                 self._process.stdout.close()
@@ -153,35 +192,39 @@ class PlaylistStreamService:
         if pending_batch:
             batch_loaded(tuple(pending_batch), processed_count, detected_total)
 
-        if self._process.stderr is not None:
-            stderr_text = self._process.stderr.read()
-            self._process.stderr.close()
-
-        return_code: int | None = self._process.wait()
+        return_code: int = self._wait_for_process()
         self._process = None
 
         if self._cancel_requested:
             return PlaylistStreamResult(
                 processed_count=processed_count,
-                cancelled=not stopped_at_limit,
-                limit_reached=stopped_at_limit,
+                cancelled=True,
+                limit_reached=False,
             )
-        if return_code != 0:
-            message: str = stderr_text.strip() or "yt-dlp playlist streaming failed."
+        if return_code != 0 and not stopped_at_range_end:
+            message: str = "\n".join(diagnostic_lines[-MAX_DIAGNOSTIC_LINES:]).strip()
+            if not message:
+                message = "yt-dlp playlist streaming failed."
             raise CommandExecutionError(message)
         if processed_count == 0:
             raise MetadataExtractionError("No selectable videos were found in the playlist.")
         return PlaylistStreamResult(
             processed_count=processed_count,
             cancelled=False,
-            limit_reached=stopped_at_limit,
+            limit_reached=False,
         )
 
     def cancel(self) -> None:
         """Request cancellation and stop the active yt-dlp process."""
         self._cancel_requested = True
         if self._process is not None and self._process.poll() is None:
-            self._process.terminate()
+            request_process_termination(self._process)
+
+    def _wait_for_process(self) -> int:
+        """Wait for the active process and force termination when needed."""
+        if self._process is None:
+            return 0
+        return wait_for_process(self._process)
 
     @staticmethod
     def _parse_json_line(line: str) -> dict[str, Any] | None:
@@ -198,6 +241,16 @@ class PlaylistStreamService:
         return None
 
     @staticmethod
+    def _append_diagnostic_line(diagnostic_lines: list[str], line: str) -> None:
+        """Keep a bounded set of non-JSON diagnostic output lines."""
+        stripped_line: str = line.strip()
+        if not stripped_line:
+            return
+        diagnostic_lines.append(stripped_line)
+        if len(diagnostic_lines) > MAX_DIAGNOSTIC_LINES:
+            del diagnostic_lines[0]
+
+    @staticmethod
     def _read_playlist_total(entry: dict[str, Any]) -> int | None:
         """Read a total playlist count when yt-dlp exposes one."""
         for key in ("playlist_count", "n_entries"):
@@ -205,3 +258,18 @@ class PlaylistStreamService:
             if isinstance(value, int) and value > 0:
                 return value
         return None
+
+    @staticmethod
+    def _read_playlist_index(
+        entry: dict[str, Any],
+        scanned_count: int,
+        requested_start_index: int,
+        use_ytdlp_range: bool,
+    ) -> int:
+        """Read the absolute playlist index for a streamed entry."""
+        value: Any = entry.get("playlist_index")
+        if isinstance(value, int) and value > 0:
+            return value
+        if use_ytdlp_range:
+            return requested_start_index + scanned_count - 1
+        return scanned_count

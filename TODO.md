@@ -1,87 +1,126 @@
-# TODO
+# TODO y roadmap oficial
 
-## Sprint 1
+Convenciones:
 
-- Complete Commit 003 - Add project agent instructions.
-- Complete Commit 004 - Settings system.
-- Complete Commit 005 - Paths and dependency checker.
-- Complete Commit 006 - Theme manager.
-- Complete Commit 007 - Logger.
-- Complete Commit 008 - Resource Manager.
-- Complete Commit 009 - MainWindow Layout Skeleton.
-- Complete Commit 010 - Dependency Warning Panel.
-- Complete Commit 011 - Window and Settings Persistence.
-- Complete Commit 012 - Sprint 1 Stabilization.
+- `[x]` implementado.
+- `[~]` implementado o en progreso, pendiente de validación.
+- `[ ]` planificado; todavía no implementado.
+- `[?]` sugerencia futura sujeta a evaluación.
 
-## Sprint 2
+## v0.3.0 - Silent downloads and playlist ranges
 
-- Complete Commit 013 - ToolbarWidget.
-- Complete Commit 014 - QueueItemWidget.
-- Complete Commit 015 - QueueWidget interactions.
-- Complete Commit 016 - Search and filtering UI.
-- Complete Commit 017 - Format and quality controls.
-- Complete Commit 018 - SettingsWidget.
-- Complete Commit 019 - LogWidget improvements.
-- Complete Commit 020 - StatusWidget improvements.
-- Complete Commit 021 - AboutDialog.
-- Complete Commit 022 - Sprint 2 stabilization.
+- `[~]` Ocultar ventanas emergentes de `yt-dlp` y `ffmpeg`.
+- `[~]` Centralizar `subprocess` con `CREATE_NO_WINDOW` en Windows.
+- `[~]` Cargar playlists por rango.
+- `[~]` Validar rangos `1-200`, `201-400` y `401-600`.
+- `[~]` Añadir `Cargar siguientes`.
+- `[~]` Evitar duplicados en cola.
+- `[~]` Mejorar cancelación del análisis de playlist.
+- `[~]` Mejorar logs de progreso.
+- `[~]` Mejorar soporte para YouTube Mix grandes.
+- `[ ]` Validar MP4 y MP3 reales desde el `.exe`.
+- `[ ]` Validar el portable en otro PC Windows.
 
-## Sprint 3
+## v0.4.0 - Queue and playlist advanced management
 
-- Complete Commit 023 - Download models and enums.
-- Complete Commit 024 - yt-dlp command builder.
-- Complete Commit 025 - Video metadata service.
-- Complete Commit 026 - Subprocess runner foundation.
-- Complete Commit 027 - Worker thread infrastructure.
-- Complete Commit 028 - Metadata loading integration.
-- Complete Commit 029 - Error handling and validation.
-- Complete Commit 030 - Sprint 3 stabilization.
+- `[ ]` Reordenar videos y asignar prioridad.
+- `[ ]` Pausar y reanudar la cola.
+- `[ ]` Reintentar elementos fallidos.
+- `[ ]` Limpiar completados y errores.
+- `[ ]` Guardar progreso por playlist.
+- `[ ]` Detectar videos ya descargados.
+- `[ ]` Exportar e importar la cola.
+- `[ ]` Añadir historial básico de descargas.
 
-## Sprint 4
+## v0.5.0 - Audio and format improvements
 
-- Complete Commit 031 - Playlist models.
-- Complete Commit 032 - Playlist metadata service.
-- Complete Commit 033 - PlaylistDialog layout.
-- Complete Commit 034 - Playlist selection logic.
-- Complete Commit 035 - Add selected videos to queue.
-- Complete Commit 036 - Playlist error handling.
-- Complete Commit 037 - Sprint 4 stabilization.
+- `[ ]` Añadir MP3, M4A, OPUS, FLAC y WAV.
+- `[ ]` Añadir `Audio original / best audio` cuando sea posible.
+- `[ ]` Añadir calidades original/best, 128, 192, 256 y 320 kbps.
+- `[ ]` Extraer miniatura y metadata.
+- `[ ]` Descargar subtítulos disponibles.
+- `[ ]` Añadir plantillas de nombre de archivo.
+- `[ ]` Crear carpetas opcionales por canal y playlist.
+- `[ ]` Explicar en la UI/documentación que WAV no recupera calidad perdida y ocupa más espacio.
 
-## Sprint 5
+## v0.6.0 - Visual polish and UX
 
-- Complete Commit 038 - Download queue service.
-- Complete Commit 039 - Download worker.
-- Complete Commit 040 - Progress parsing.
-- Complete Commit 041 - MP4 download.
-- Complete Commit 042 - MP3 download.
-- Complete Commit 043 - Quality selection.
-- Complete Commit 044 - Output folder selection.
-- Complete Commit 045 - Cancel current download.
-- Complete Commit 046 - Cancel all downloads.
-- Complete Commit 047 - Up to 3 simultaneous downloads.
-- Complete Commit 048 - Sprint 5 stabilization.
+- `[ ]` Rediseñar la barra superior en dos filas o grupos.
+- `[ ]` Mejorar separación de botones y corregir textos cortados.
+- `[ ]` Mejorar combos y desplegables.
+- `[ ]` Mejorar escalado del fondo y añadir opacidad configurable.
+- `[ ]` Añadir modo compacto.
+- `[ ]` Mejorar la vista de cola.
+- `[ ]` Añadir miniaturas a `QueueItemWidget` e iconos por estado.
+- `[ ]` Mejorar pantalla vacía, tooltips y atajos de teclado.
 
-## Sprint 6
+## v0.7.0 - Download history and duplicate control
 
-- Complete Commit 049 - Queue persistence.
-- Complete Commit 050 - Settings persistence improvements.
-- Complete Commit 051 - Better error messages.
-- Complete Commit 052 - Better empty states.
-- Complete Commit 053 - Keyboard shortcuts.
-- Complete Commit 054 - UI polish pass.
-- Complete Commit 055 - Log export.
-- Complete Commit 056 - Sprint 6 stabilization.
+- `[ ]` Crear historial completo y buscable.
+- `[ ]` Evitar descargas duplicadas mediante historial.
+- `[ ]` Abrir carpeta y copiar ruta del archivo.
+- `[ ]` Reintentar desde historial.
+- `[ ]` Marcar favoritos.
+- `[ ]` Exportar e importar historial.
 
-## Sprint 7
+## v0.8.0 - Advanced settings and diagnostics
 
-- Complete Commit 057 - PyInstaller spec.
-- Complete Commit 058 - Build script.
-- Complete Commit 059 - Version metadata.
-- Complete Commit 060 - App icon support.
-- Complete Commit 061 - Release README.
-- Complete Commit 062 - Final validation.
-- Complete Commit 063 - v0.1.0 release.
+- `[ ]` Añadir configuración avanzada.
+- `[ ]` Evaluar límite de ancho de banda admitido por `yt-dlp`.
+- `[ ]` Configurar descargas simultáneas.
+- `[ ]` Añadir cookies opcionales del navegador con advertencias.
+- `[ ]` Añadir proxy personalizado.
+- `[ ]` Exportar logs y añadir modo diagnóstico.
+- `[ ]` Mejorar verificación de dependencias.
+- `[ ]` Restablecer, exportar e importar configuración.
 
-## Next
+## v0.9.0 - Installer and release candidate
 
-- Validate v0.2.0 with large playlist and YouTube Mix URLs before manual release commit.
+- `[ ]` Decidir si se publicará un instalador real para Windows.
+- `[ ]` Preparar ZIP portable final, accesos directos e icono definitivo.
+- `[ ]` Verificar metadata de versión.
+- `[ ]` Completar documentación de usuario final.
+- `[ ]` Probar en otro PC y sin VS Code.
+- `[ ]` Validar el `.exe` y corregir errores finales.
+
+## v1.0.0 - Stable Windows release
+
+- `[ ]` Publicar ejecutable y portable estables.
+- `[ ]` Completar documentación y changelog.
+- `[ ]` Confirmar manejo robusto de errores y descargas silenciosas.
+- `[ ]` Confirmar playlists por rango y YouTube Mix estable.
+- `[ ]` Incluir audio avanzado, incluido WAV.
+- `[ ]` Incluir historial y control de duplicados.
+- `[ ]` Confirmar interfaz ordenada, legible y lista para compartir.
+
+## Futuras versiones después de v1.0
+
+### v1.1 - Multi-source downloads
+
+- `[?]` Evaluar Facebook, X/Twitter, TikTok, Vimeo, Instagram, SoundCloud, clips/VOD de Twitch y otras fuentes compatibles con `yt-dlp`.
+- `[?]` Detectar el origen de la URL.
+- `[?]` Advertir cuando un sitio requiera cookies o sesión.
+- `[?]` Documentar que el soporte depende de `yt-dlp` y puede cambiar.
+
+### v1.2 - Site profiles
+
+- `[?]` Crear perfiles y opciones por plataforma.
+- `[?]` Añadir cookies opcionales, errores específicos y ayuda por fuente.
+
+### v1.3 - Scheduler and automation
+
+- `[?]` Programar horarios de descarga.
+- `[?]` Apagar el PC al finalizar.
+- `[?]` Ejecutar la cola al iniciar Windows de forma opcional.
+- `[?]` Añadir modo de bajo consumo.
+
+### v1.4 - Remote companion
+
+- `[?]` Evaluar una app Android para controlar por WiFi/5G la cola ejecutada en el PC.
+- `[?]` Mantener inicialmente `yt-dlp` y FFmpeg en Windows, no dentro del teléfono.
+
+### v2.0 - Android evaluation
+
+- `[?]` Evaluar una aplicación Android separada con Kotlin, Java o Flutter.
+- `[?]` No reutilizar PySide6/PyInstaller para Android.
+- `[?]` Considerar WiFi/5G, avisos de datos móviles, modo solo WiFi, pausa al cambiar de red, almacenamiento y ejecución en segundo plano permitida por Android.

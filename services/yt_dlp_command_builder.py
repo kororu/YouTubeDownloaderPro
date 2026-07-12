@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from models.download_enums import DownloadFormat, DownloadQuality
+from models.playlist_range import PlaylistRange
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,23 +48,38 @@ class YtDlpCommandBuilder:
             source_url,
         ]
 
-    def build_playlist_stream_command(self, source_url: str) -> list[str]:
+    def build_playlist_stream_command(
+        self,
+        source_url: str,
+        playlist_range: PlaylistRange | None = None,
+    ) -> list[str]:
         """Build a command that streams flat playlist entries as JSON lines.
 
         Args:
             source_url: Source playlist or YouTube Mix URL.
+            playlist_range: Optional one-based inclusive playlist range.
 
         Returns:
             Command arguments ready for subprocess execution.
         """
-        return [
+        command: list[str] = [
             self.executable_name,
             "--dump-json",
             "--flat-playlist",
             "--yes-playlist",
             "--no-warnings",
-            source_url,
         ]
+        if playlist_range is not None:
+            command.extend(
+                [
+                    "--playlist-start",
+                    str(playlist_range.start_index),
+                    "--playlist-end",
+                    str(playlist_range.end_index),
+                ]
+            )
+        command.append(source_url)
+        return command
 
     def build_download_command(
         self,

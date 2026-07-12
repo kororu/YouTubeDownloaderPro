@@ -32,6 +32,11 @@ class QueueItemData:
     uploader: str | None = None
     error_message: str | None = None
     progress_percentage: float = 0.0
+    playlist_index: int | None = None
+    playlist_title: str | None = None
+    playlist_source_url: str | None = None
+    is_youtube_mix: bool = False
+    video_id: str | None = None
 
     @classmethod
     def from_download_item(cls, download_item: DownloadItem) -> "QueueItemData":
@@ -59,6 +64,11 @@ class QueueItemData:
             uploader=metadata_uploader,
             error_message=download_item.error_message,
             progress_percentage=download_item.progress_percentage,
+            playlist_index=download_item.playlist_index,
+            playlist_title=download_item.playlist_title,
+            playlist_source_url=download_item.playlist_source_url,
+            is_youtube_mix=download_item.is_youtube_mix,
+            video_id=download_item.video_id,
         )
 
 
@@ -131,6 +141,11 @@ class QueueItemWidget(QFrame):
             metadata=metadata,
             error_message=self._item_data.error_message,
             progress_percentage=self._item_data.progress_percentage,
+            playlist_index=self._item_data.playlist_index,
+            playlist_title=self._item_data.playlist_title,
+            playlist_source_url=self._item_data.playlist_source_url,
+            is_youtube_mix=self._item_data.is_youtube_mix,
+            video_id=self._item_data.video_id,
         )
 
     def is_selected(self) -> bool:
@@ -163,7 +178,9 @@ class QueueItemWidget(QFrame):
             f"{self._item_data.quality} "
             f"{self._item_data.status} "
             f"{self._item_data.title or ''} "
-            f"{self._item_data.uploader or ''}"
+            f"{self._item_data.uploader or ''} "
+            f"{self._item_data.playlist_title or ''} "
+            f"{self._item_data.playlist_index or ''}"
         ).lower()
         return normalized_search in searchable_text
 
@@ -233,13 +250,15 @@ class QueueItemWidget(QFrame):
         display_title: str = self._item_data.title or "Cargando metadatos..."
         self._title_label.setText(display_title)
         self._url_label.setText(self._item_data.source_url)
-        self._metadata_label.setText(
-            (
-                f"Formato: {self._item_data.media_format.upper()} | "
-                f"Calidad: {self._item_data.quality} | "
-                f"Estado: {self._item_data.status}"
-            )
-        )
+        metadata_parts: list[str] = [
+            f"Formato: {self._item_data.media_format.upper()}",
+            f"Calidad: {self._item_data.quality}",
+            f"Estado: {self._item_data.status}",
+        ]
+        if self._item_data.playlist_index is not None:
+            origin_label: str = "Mix" if self._item_data.is_youtube_mix else "Playlist"
+            metadata_parts.append(f"{origin_label}: #{self._item_data.playlist_index}")
+        self._metadata_label.setText(" | ".join(metadata_parts))
         self._progress_label.setText(f"Progreso: {self._item_data.progress_percentage:.1f}%")
         error_message: str = self._item_data.error_message or ""
         self._error_label.setText(error_message)

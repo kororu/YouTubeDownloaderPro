@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from uuid import uuid4
+from dataclasses import dataclass
 from pathlib import Path
+from uuid import uuid4
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QCloseEvent
@@ -18,9 +19,11 @@ from models.download_enums import DownloadFormat, DownloadQuality, DownloadStatu
 from models.download_item import DownloadItem
 from models.download_progress import DownloadProgress
 from models.playlist_metadata import PlaylistVideo
+from models.playlist_range import PlaylistRange
 from models.video_metadata import VideoMetadata
 from services.download_queue_service import DownloadQueueService
 from services.metadata_worker import MetadataWorker
+from services.playlist_range_history_service import PlaylistRangeHistoryService
 from services.playlist_worker import PlaylistWorker
 from services.queue_persistence_service import QueuePersistenceService
 from services.url_validator import UrlValidationResult, UrlValidator
@@ -31,6 +34,26 @@ from widgets.queue_widget import QueueWidget
 from widgets.settings_widget import SettingsWidget
 from widgets.status_widget import StatusWidget
 from widgets.toolbar_widget import ToolbarWidget
+
+
+@dataclass(frozen=True, slots=True)
+class PlaylistLoadRequest:
+    """Playlist load request state."""
+
+    source_url: str
+    media_format: DownloadFormat
+    quality: DownloadQuality
+    playlist_range: PlaylistRange
+    is_youtube_mix: bool
+
+
+@dataclass(slots=True)
+class PlaylistLoadStats:
+    """Mutable playlist load counters."""
+
+    processed_count: int = 0
+    added_count: int = 0
+    duplicate_count: int = 0
 
 
 class MainWindow(QMainWindow):
@@ -57,13 +80,15 @@ class MainWindow(QMainWindow):
         self._url_validator: UrlValidator = UrlValidator()
         self._metadata_workers: dict[str, MetadataWorker] = {}
         self._playlist_workers: dict[str, PlaylistWorker] = {}
-        self._playlist_requests: dict[str, tuple[DownloadFormat, DownloadQuality]] = {}
+        self._playlist_requests: dict[str, PlaylistLoadRequest] = {}
+        self._playlist_stats: dict[str, PlaylistLoadStats] = {}
         self._playlist_totals: dict[str, int] = {}
         self._active_playlist_loads: int = 0
         self._download_queue_service: DownloadQueueService = DownloadQueueService(
             self._settings.max_concurrent_downloads
         )
         self._queue_persistence_service: QueuePersistenceService = QueuePersistenceService()
+        self._playlist_range_history_service: PlaylistRangeHistoryService = PlaylistRangeHistoryService()
         self._toolbar_widget: ToolbarWidget
         self._queue_widget: QueueWidget
         self._log_widget: LogWidget
@@ -148,6 +173,9 @@ class MainWindow(QMainWindow):
         self._toolbar_widget = ToolbarWidget(
             selected_format=self._settings.selected_format,
             selected_quality=self._settings.selected_quality,
+            playlist_start_index=self._settings.playlist_start_index,
+            playlist_end_index=self._settings.playlist_end_index,
+            playlist_limit=self._settings.max_playlist_items,
             parent=central_widget,
         )
         self._queue_widget = QueueWidget(central_widget)
@@ -193,11 +221,14 @@ class MainWindow(QMainWindow):
         """Connect main window widget signals."""
         self._toolbar_widget.add_video_requested.connect(self._add_video_to_queue)
         self._toolbar_widget.add_playlist_requested.connect(self._add_playlist_to_queue)
+        self._toolbar_widget.add_next_playlist_range_requested.connect(self._add_next_playlist_range_to_queue)
         self._toolbar_widget.start_downloads_requested.connect(self._start_selected_downloads)
         self._toolbar_widget.cancel_current_requested.connect(self._cancel_current_download)
         self._toolbar_widget.cancel_all_requested.connect(self._cancel_all_downloads)
         self._toolbar_widget.settings_requested.connect(self._focus_settings_panel)
         self._toolbar_widget.about_requested.connect(self._show_about_dialog)
+        self._toolbar_widget.queue_search_changed.connect(self._queue_widget.set_search_text)
+        self._toolbar_widget.queue_sort_changed.connect(self._queue_widget.set_sort_mode)
         self._queue_widget.queue_changed.connect(self._handle_queue_changed)
         self._settings_widget.settings_changed.connect(self._save_settings)
         self._log_widget.export_requested.connect(self._export_logs)
@@ -229,13 +260,44 @@ class MainWindow(QMainWindow):
         self._status_widget.set_status_message("cargando metadatos")
         self._start_metadata_worker(download_item)
 
-    def _add_playlist_to_queue(self, source_url: str, media_format: str, quality: str) -> None:
-        """Validate a playlist URL and load selectable videos."""
+    def _add_playlist_to_queue(
+        self,
+        source_url: str,
+        media_format: str,
+        quality: str,
+        playlist_range_data: object,
+    ) -> None:
+        """Validate a playlist URL and load a selected range."""
+        if not isinstance(playlist_range_data, PlaylistRange):
+            self._show_input_error("Rango de playlist inválido.")
+            return
+        self._queue_playlist_range(source_url, media_format, quality, playlist_range_data)
+
+    def _add_next_playlist_range_to_queue(self, source_url: str, media_format: str, quality: str) -> None:
+        """Validate a playlist URL and load the next persisted range."""
         validation_result: UrlValidationResult = self._url_validator.validate(source_url)
         if not validation_result.is_valid or validation_result.normalized_url is None:
             self._show_input_error(validation_result.error_message or "URL inválida.")
             return
+        playlist_range: PlaylistRange = self._playlist_range_history_service.next_range(
+            validation_result.normalized_url,
+            self._settings.max_playlist_items,
+            self._settings.playlist_start_index,
+        )
+        self._queue_playlist_range(validation_result.normalized_url, media_format, quality, playlist_range)
 
+    def _queue_playlist_range(
+        self,
+        source_url: str,
+        media_format: str,
+        quality: str,
+        playlist_range: PlaylistRange,
+    ) -> None:
+        """Validate a playlist request and start range loading."""
+        validation_result: UrlValidationResult = self._url_validator.validate(source_url)
+        if not validation_result.is_valid or validation_result.normalized_url is None:
+            self._show_input_error(validation_result.error_message or "URL inválida.")
+            return
         try:
             selected_format: DownloadFormat = DownloadFormat(media_format)
             selected_quality: DownloadQuality = DownloadQuality(quality)
@@ -243,18 +305,27 @@ class MainWindow(QMainWindow):
             self._show_input_error("Formato o calidad no válidos.")
             return
 
-        request_id: str = str(uuid4())
-        self._playlist_requests[request_id] = (selected_format, selected_quality)
-        self._start_playlist_worker(request_id, validation_result.normalized_url)
-        if self._url_validator.is_youtube_mix_url(validation_result.normalized_url):
-            self._log_widget.append_info("YouTube Mix detectado.")
-        if self._settings.max_playlist_items == 0:
+        if playlist_range.item_count > 500:
             self._log_widget.append_warning(
-                "Advertencia: procesar playlists sin límite puede ralentizar o bloquear la aplicación."
+                f"Advertencia: el rango solicitado contiene {playlist_range.item_count} videos."
             )
-        else:
-            self._log_widget.append_info(f"Límite activo: se procesarán {self._settings.max_playlist_items} videos")
-        self._log_widget.append_info(f"Cargando playlist: {validation_result.normalized_url}")
+
+        normalized_url: str = validation_result.normalized_url
+        is_youtube_mix: bool = self._url_validator.is_youtube_mix_url(normalized_url)
+        request_id: str = str(uuid4())
+        self._playlist_requests[request_id] = PlaylistLoadRequest(
+            source_url=normalized_url,
+            media_format=selected_format,
+            quality=selected_quality,
+            playlist_range=playlist_range,
+            is_youtube_mix=is_youtube_mix,
+        )
+        self._playlist_stats[request_id] = PlaylistLoadStats()
+        self._start_playlist_worker(request_id, normalized_url, playlist_range)
+        if is_youtube_mix:
+            self._log_widget.append_info("YouTube Mix detectado.")
+        self._log_widget.append_info(f"Rango solicitado: {playlist_range.label()}")
+        self._log_widget.append_info(f"Cargando playlist: {normalized_url}")
         self._status_widget.set_status_message("cargando playlist")
 
     def _handle_queue_changed(self, total_items: int, selected_items: int) -> None:
@@ -338,9 +409,9 @@ class MainWindow(QMainWindow):
         self._log_widget.append_error(message)
         self._status_widget.set_status_message("entrada inválida")
 
-    def _start_playlist_worker(self, request_id: str, source_url: str) -> None:
+    def _start_playlist_worker(self, request_id: str, source_url: str, playlist_range: PlaylistRange) -> None:
         """Start asynchronous incremental playlist loading."""
-        worker: PlaylistWorker = PlaylistWorker(request_id, source_url, self._settings.max_playlist_items)
+        worker: PlaylistWorker = PlaylistWorker(request_id, source_url, playlist_range)
         worker.playlist_started.connect(self._handle_playlist_started)
         worker.playlist_total_detected.connect(self._handle_playlist_total_detected)
         worker.playlist_limit_reached.connect(self._handle_playlist_limit_reached)
@@ -353,23 +424,21 @@ class MainWindow(QMainWindow):
         self._active_playlist_loads += 1
         worker.start()
 
-    def _handle_playlist_started(self, request_id: str, source_url: str) -> None:
+    def _handle_playlist_started(self, request_id: str, source_url: str, playlist_range_data: object) -> None:
         """Handle playlist streaming startup."""
         self._log_widget.append_info("Cargando playlist...")
         self._log_widget.append_info(f"Origen: {source_url}")
+        if isinstance(playlist_range_data, PlaylistRange):
+            self._log_widget.append_info(f"Procesando rango {playlist_range_data.label()}")
         self._status_widget.set_status_message("cargando playlist")
 
     def _handle_playlist_total_detected(self, request_id: str, total_count: int) -> None:
         """Handle detected playlist total count."""
         self._playlist_totals[request_id] = total_count
         self._log_widget.append_info(f"Playlist detectada: {total_count} videos")
-        if self._settings.max_playlist_items > 0 and total_count > self._settings.max_playlist_items:
-            self._log_widget.append_warning(
-                (
-                    f"La playlist contiene {total_count} videos. "
-                    f"Se procesarán los primeros {self._settings.max_playlist_items} para evitar bloqueos."
-                )
-            )
+        request: PlaylistLoadRequest | None = self._playlist_requests.get(request_id)
+        if request is not None and request.playlist_range.start_index > total_count:
+            self._log_widget.append_warning("El inicio solicitado supera el total detectado.")
 
     def _handle_playlist_limit_reached(self, request_id: str, total_count: int, max_items: int) -> None:
         """Handle active playlist limit notification."""
@@ -390,65 +459,101 @@ class MainWindow(QMainWindow):
         if not playlist_videos:
             return
 
-        request_preferences: tuple[DownloadFormat, DownloadQuality] | None = self._playlist_requests.get(request_id)
-        if request_preferences is None:
+        request: PlaylistLoadRequest | None = self._playlist_requests.get(request_id)
+        stats: PlaylistLoadStats | None = self._playlist_stats.get(request_id)
+        if request is None or stats is None:
             return
 
         detected_total: int | None = total_count if isinstance(total_count, int) else None
         if detected_total is not None:
             self._playlist_totals[request_id] = detected_total
 
-        media_format, quality = request_preferences
+        previous_processed_count: int = stats.processed_count
         download_items: list[DownloadItem] = []
+        existing_duplicate_keys: set[str] = self._queue_duplicate_keys()
         for video in playlist_videos:
             download_item: DownloadItem = DownloadItem(
                 item_id=str(uuid4()),
                 source_url=video.source_url,
-                media_format=media_format,
-                quality=quality,
+                media_format=request.media_format,
+                quality=request.quality,
                 status=DownloadStatus.READY,
                 metadata=video.to_video_metadata(),
+                playlist_index=video.index,
+                playlist_title=video.playlist_title or request.source_url,
+                playlist_source_url=request.source_url,
+                is_youtube_mix=request.is_youtube_mix,
+                video_id=video.video_id,
             )
-            self._queue_widget.add_download_item(download_item)
+            duplicate_key: str = download_item.duplicate_key()
+            if duplicate_key in existing_duplicate_keys:
+                stats.duplicate_count += 1
+                self._log_widget.append_warning(f"Video omitido por duplicado: {video.title}")
+                continue
+            existing_duplicate_keys.add(duplicate_key)
+            stats.added_count += 1
             download_items.append(download_item)
-        self._download_queue_service.add_items(tuple(download_items))
+        playlist_items: tuple[DownloadItem, ...] = tuple(download_items)
+        self._queue_widget.add_download_items(playlist_items)
+        self._download_queue_service.add_items(playlist_items)
 
-        playlist_total: int | None = self._playlist_totals.get(request_id)
-        effective_total: int | None = self._effective_playlist_total(playlist_total)
-        if playlist_total is not None and playlist_total > 0:
-            percentage_total: int = effective_total or playlist_total
-            percentage: int = min(100, round((processed_count / percentage_total) * 100))
-            self._status_widget.set_progress(float(percentage))
-            progress_message: str = f"Procesando video {processed_count} de {percentage_total} ({percentage}%)"
-        else:
-            progress_message = f"Procesando video {processed_count}..."
+        stats.processed_count = processed_count
+        requested_count: int = request.playlist_range.item_count
+        percentage: int = min(100, round((processed_count / requested_count) * 100))
+        self._status_widget.set_progress(float(percentage))
+        last_video: PlaylistVideo = playlist_videos[-1]
+        progress_message: str = (
+            f"Procesando video {last_video.index} de {request.playlist_range.end_index} ({percentage}%)"
+        )
 
         block_number: int = max(1, (processed_count - 1) // 25 + 1)
         self._log_widget.append_info(f"Procesando bloque {block_number}...")
-        if self._should_log_playlist_progress(processed_count, effective_total):
+        if previous_processed_count == 0:
+            self._log_widget.append_info(
+                f"Procesando video {playlist_videos[0].index} de {request.playlist_range.end_index}"
+            )
+        if self._should_log_playlist_progress(processed_count, requested_count):
             self._log_widget.append_info(progress_message)
-        if self._should_log_playlist_item(processed_count, effective_total):
-            self._log_widget.append_info(f"Agregado a la cola: {playlist_videos[-1].title}")
+        if playlist_items and self._should_log_playlist_item(processed_count, requested_count):
+            self._log_widget.append_info(f"Agregado {last_video.index}/{request.playlist_range.end_index}: {last_video.title}")
+            self._log_widget.append_info(f"Agregado a la cola: {last_video.title}")
 
     def _handle_playlist_finished(self, request_id: str, processed_count: int, limit_reached: bool) -> None:
         """Handle completed playlist streaming."""
-        self._playlist_requests.pop(request_id, None)
+        request: PlaylistLoadRequest | None = self._playlist_requests.pop(request_id, None)
+        stats: PlaylistLoadStats = self._playlist_stats.pop(request_id, PlaylistLoadStats())
         self._playlist_totals.pop(request_id, None)
         self._active_playlist_loads = max(0, self._active_playlist_loads - 1)
         self._persist_queue()
+        if request is not None and processed_count > 0:
+            completed_end_index: int = min(
+                request.playlist_range.end_index,
+                request.playlist_range.start_index + processed_count - 1,
+            )
+            self._playlist_range_history_service.save_completed_range(
+                request.source_url,
+                PlaylistRange(request.playlist_range.start_index, completed_end_index),
+            )
+            next_range: PlaylistRange = request.playlist_range.next_range(self._settings.max_playlist_items)
+            self._log_widget.append_info(f"Próximo rango sugerido: {next_range.label()}")
         if limit_reached:
             self._log_widget.append_warning("Carga detenida al alcanzar el límite configurado")
-        self._log_widget.append_info(f"Carga finalizada: {processed_count} videos agregados")
+        self._log_widget.append_info(f"Videos agregados: {stats.added_count}")
+        self._log_widget.append_info(f"Duplicados omitidos: {stats.duplicate_count}")
+        self._log_widget.append_info(f"Carga finalizada: {stats.added_count} videos agregados")
         self._status_widget.set_status_message("playlist agregada")
 
     def _handle_playlist_cancelled(self, request_id: str, processed_count: int) -> None:
         """Handle playlist streaming cancellation."""
         self._playlist_requests.pop(request_id, None)
+        stats: PlaylistLoadStats = self._playlist_stats.pop(request_id, PlaylistLoadStats())
         self._playlist_totals.pop(request_id, None)
         self._active_playlist_loads = max(0, self._active_playlist_loads - 1)
         self._persist_queue()
-        self._log_widget.append_warning("Carga cancelada por el usuario")
-        self._log_widget.append_info(f"Carga finalizada: {processed_count} videos agregados")
+        self._log_widget.append_warning("Carga de playlist cancelada por el usuario")
+        self._log_widget.append_info(f"Videos agregados: {stats.added_count}")
+        self._log_widget.append_info(f"Duplicados omitidos: {stats.duplicate_count}")
+        self._log_widget.append_info(f"Carga finalizada: {processed_count} videos procesados")
         self._status_widget.set_status_message("playlist cancelada")
 
     def _start_selected_downloads(self) -> None:
@@ -540,6 +645,7 @@ class MainWindow(QMainWindow):
     def _handle_playlist_failed(self, request_id: str, error_message: str) -> None:
         """Handle playlist metadata loading failure."""
         self._playlist_requests.pop(request_id, None)
+        self._playlist_stats.pop(request_id, None)
         self._playlist_totals.pop(request_id, None)
         self._active_playlist_loads = max(0, self._active_playlist_loads - 1)
         self._log_widget.append_error(self._friendly_error_message(error_message))
@@ -579,10 +685,11 @@ class MainWindow(QMainWindow):
             settings.selected_format,
             settings.selected_quality,
         )
-        if settings.max_playlist_items == 0:
-            self._log_widget.append_warning(
-                "Advertencia: procesar playlists sin límite puede ralentizar o bloquear la aplicación."
-            )
+        self._toolbar_widget.set_playlist_preferences(
+            settings.playlist_start_index,
+            settings.playlist_end_index,
+            settings.max_playlist_items,
+        )
         self._log_widget.append_info("Ajustes guardados.")
         self._status_widget.set_status_message("ajustes guardados")
 
@@ -641,6 +748,10 @@ class MainWindow(QMainWindow):
                 return self._settings.max_playlist_items
             return min(detected_total, self._settings.max_playlist_items)
         return detected_total
+
+    def _queue_duplicate_keys(self) -> set[str]:
+        """Return duplicate keys for current queue items."""
+        return {item.duplicate_key() for item in self._queue_widget.all_download_items()}
 
     def _report_dependency_status(self) -> None:
         """Report dependency status without a permanent visual panel."""

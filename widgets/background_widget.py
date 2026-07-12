@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QPainter, QPaintEvent, QPixmap
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QColor, QPainter, QPaintEvent, QPixmap, QResizeEvent
 from PySide6.QtWidgets import QWidget
 
 
@@ -24,6 +24,8 @@ class BackgroundWidget(QWidget):
         super().__init__(parent)
         self._background_image_path: str = ""
         self._background_pixmap: QPixmap | None = None
+        self._scaled_background_pixmap: QPixmap | None = None
+        self._scaled_background_size: QSize = QSize()
         self.setObjectName("mainContentArea")
         self.setAutoFillBackground(False)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, False)
@@ -38,6 +40,7 @@ class BackgroundWidget(QWidget):
         normalized_path: str = background_image_path.strip()
         self._background_image_path = normalized_path
         self._background_pixmap = self._load_pixmap(normalized_path)
+        self._refresh_scaled_background_pixmap()
         self.update()
 
     def has_background_image(self) -> bool:
@@ -49,20 +52,42 @@ class BackgroundWidget(QWidget):
         painter: QPainter = QPainter(self)
         painter.fillRect(self.rect(), QColor("#0d1117"))
 
-        if self._background_pixmap is not None and not self._background_pixmap.isNull():
-            scaled_pixmap: QPixmap = self._background_pixmap.scaled(
-                self.size(),
-                Qt.AspectRatioMode.KeepAspectRatioByExpanding,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-            x_position: int = (self.width() - scaled_pixmap.width()) // 2
-            y_position: int = (self.height() - scaled_pixmap.height()) // 2
+        if self._background_pixmap is not None and self._scaled_background_size != self.size():
+            self._refresh_scaled_background_pixmap()
+
+        if self._scaled_background_pixmap is not None and not self._scaled_background_pixmap.isNull():
+            x_position: int = (self.width() - self._scaled_background_pixmap.width()) // 2
+            y_position: int = (self.height() - self._scaled_background_pixmap.height()) // 2
             painter.setOpacity(0.58)
-            painter.drawPixmap(x_position, y_position, scaled_pixmap)
+            painter.drawPixmap(x_position, y_position, self._scaled_background_pixmap)
             painter.setOpacity(1.0)
             painter.fillRect(self.rect(), QColor(13, 17, 23, 96))
 
         painter.end()
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        """Refresh the cover-scaled background when the widget changes size."""
+        super().resizeEvent(event)
+        self._refresh_scaled_background_pixmap()
+
+    def _refresh_scaled_background_pixmap(self) -> None:
+        """Scale the background image to cover the current widget size."""
+        if (
+            self._background_pixmap is None
+            or self._background_pixmap.isNull()
+            or self.width() <= 0
+            or self.height() <= 0
+        ):
+            self._scaled_background_pixmap = None
+            self._scaled_background_size = QSize()
+            return
+
+        self._scaled_background_pixmap = self._background_pixmap.scaled(
+            self.size(),
+            Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        self._scaled_background_size = QSize(self.size())
 
     @classmethod
     def _load_pixmap(cls, background_image_path: str) -> QPixmap | None:

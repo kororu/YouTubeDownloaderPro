@@ -8,6 +8,7 @@ from pathlib import Path
 from PySide6.QtCore import QThread, Signal
 
 from core.dependency_checker import DependencyChecker
+from core.process import create_text_process, request_process_termination, wait_for_process
 from models.download_enums import DownloadFormat
 from models.download_item import DownloadItem
 from models.download_progress import DownloadProgress
@@ -59,7 +60,7 @@ class DownloadWorker(QThread):
         """Cancel the running process."""
         self._cancel_requested = True
         if self._process is not None and self._process.poll() is None:
-            self._process.terminate()
+            request_process_termination(self._process)
 
     def run(self) -> None:
         """Execute the download command."""
@@ -81,13 +82,10 @@ class DownloadWorker(QThread):
         )
 
         try:
-            self._process = subprocess.Popen(
+            self._process = create_text_process(
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
             )
         except OSError as exc:
             self.download_failed.emit(self.item_id, str(exc))
@@ -104,7 +102,7 @@ class DownloadWorker(QThread):
                 if progress is not None:
                     self.progress_changed.emit(self.item_id, progress)
 
-        return_code: int | None = self._process.wait()
+        return_code: int = wait_for_process(self._process)
         if self._cancel_requested:
             self.download_cancelled.emit(self.item_id)
             return

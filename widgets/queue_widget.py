@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -40,8 +38,8 @@ class QueueWidget(QWidget):
         self._items: list[QueueItemWidget] = []
         self._item_order: dict[str, int] = {}
         self._empty_state: QLabel
-        self._search_input: QLineEdit
-        self._sort_combo_box: QComboBox
+        self._search_text: str = ""
+        self._sort_mode: str = "Orden de ingreso"
         self._build_layout()
 
     def add_download_item(self, download_item: DownloadItem) -> None:
@@ -50,18 +48,38 @@ class QueueWidget(QWidget):
         Args:
             download_item: Domain queue item.
         """
+        self.add_download_items((download_item,))
+
+    def add_download_items(self, download_items: tuple[DownloadItem, ...]) -> None:
+        """Add domain items to the visible queue in a single UI update.
+
+        Args:
+            download_items: Domain queue items.
+        """
+        if not download_items:
+            return
+
+        self.setUpdatesEnabled(False)
+        try:
+            for download_item in download_items:
+                item_widget: QueueItemWidget = self._create_item_widget(download_item)
+                insert_index: int = max(0, self._items_layout.count() - 1)
+                self._items.append(item_widget)
+                self._item_order[item_widget.item_id] = len(self._item_order)
+                self._items_layout.insertWidget(insert_index, item_widget)
+            self._apply_sorting()
+            self._apply_filter()
+        finally:
+            self.setUpdatesEnabled(True)
+        self._emit_queue_changed()
+
+    def _create_item_widget(self, download_item: DownloadItem) -> QueueItemWidget:
+        """Create a configured queue item widget."""
         item_data: QueueItemData = QueueItemData.from_download_item(download_item)
         item_widget: QueueItemWidget = QueueItemWidget(item_data, self._items_container)
         item_widget.selection_changed.connect(self._emit_queue_changed)
         item_widget.remove_requested.connect(self.remove_item)
-
-        insert_index: int = max(0, self._items_layout.count() - 1)
-        self._items.append(item_widget)
-        self._item_order[item_widget.item_id] = len(self._item_order)
-        self._items_layout.insertWidget(insert_index, item_widget)
-        self._apply_sorting()
-        self._apply_filter()
-        self._emit_queue_changed()
+        return item_widget
 
     def add_item(self, source_url: str, media_format: str, quality: str) -> None:
         """Add a URL to the visible queue.
@@ -89,14 +107,7 @@ class QueueWidget(QWidget):
         if item_widget is None:
             return
 
-        updated_item: DownloadItem = DownloadItem(
-            item_id=item_id,
-            source_url=item_widget.source_url,
-            media_format=DownloadFormat(item_widget.media_format),
-            quality=DownloadQuality(item_widget.quality),
-            status=DownloadStatus.READY,
-            metadata=metadata,
-        )
+        updated_item: DownloadItem = item_widget.to_download_item().with_metadata(metadata)
         item_widget.update_item(QueueItemData.from_download_item(updated_item))
         self._apply_filter()
 
@@ -123,14 +134,7 @@ class QueueWidget(QWidget):
         if item_widget is None:
             return
 
-        failed_item: DownloadItem = DownloadItem(
-            item_id=item_id,
-            source_url=item_widget.source_url,
-            media_format=DownloadFormat(item_widget.media_format),
-            quality=DownloadQuality(item_widget.quality),
-            status=DownloadStatus.FAILED,
-            error_message=error_message,
-        )
+        failed_item: DownloadItem = item_widget.to_download_item().with_failure(error_message)
         item_widget.update_item(QueueItemData.from_download_item(failed_item))
         self._apply_filter()
 
@@ -186,6 +190,24 @@ class QueueWidget(QWidget):
         """Return all queue item domain values."""
         return tuple(item.to_download_item() for item in self._items)
 
+    def set_search_text(self, search_text: str) -> None:
+        """Apply a queue search filter.
+
+        Args:
+            search_text: Search text entered by the user.
+        """
+        self._search_text = search_text
+        self._apply_filter()
+
+    def set_sort_mode(self, sort_mode: str) -> None:
+        """Apply the selected queue sort mode.
+
+        Args:
+            sort_mode: Sort mode selected by the user.
+        """
+        self._sort_mode = sort_mode
+        self._apply_sorting()
+
     def _build_layout(self) -> None:
         """Build the queue layout."""
         layout: QVBoxLayout = QVBoxLayout(self)
@@ -205,25 +227,11 @@ class QueueWidget(QWidget):
         remove_selected_button: QPushButton = QPushButton("Quitar seleccionados", self)
         remove_selected_button.clicked.connect(self.remove_selected_items)
 
-        self._sort_combo_box = QComboBox(self)
-        self._sort_combo_box.setObjectName("queueSortComboBox")
-        self._sort_combo_box.addItems(("Orden de ingreso", "URL A-Z", "URL Z-A"))
-        self._sort_combo_box.currentIndexChanged.connect(self._apply_sorting)
-
-        self._search_input = QLineEdit(self)
-        self._search_input.setObjectName("queueSearchInput")
-        self._search_input.setClearButtonEnabled(True)
-        self._search_input.setFixedWidth(320)
-        self._search_input.setToolTip("Buscar en la cola")
-        self._search_input.textChanged.connect(self._apply_filter)
-
         header_layout.addWidget(title_label)
         header_layout.addStretch(1)
         header_layout.addWidget(select_all_button)
         header_layout.addWidget(deselect_all_button)
         header_layout.addWidget(remove_selected_button)
-        header_layout.addWidget(self._sort_combo_box)
-        header_layout.addWidget(self._search_input)
 
         scroll_area: QScrollArea = QScrollArea(self)
         scroll_area.setObjectName("queueScrollArea")
@@ -258,10 +266,9 @@ class QueueWidget(QWidget):
 
     def _apply_filter(self) -> None:
         """Filter queue items by search text."""
-        search_text: str = self._search_input.text()
         visible_count: int = 0
         for item_widget in self._items:
-            is_visible: bool = item_widget.matches_search(search_text)
+            is_visible: bool = item_widget.matches_search(self._search_text)
             item_widget.setVisible(is_visible)
             if is_visible:
                 visible_count += 1
@@ -269,12 +276,11 @@ class QueueWidget(QWidget):
 
     def _apply_sorting(self) -> None:
         """Apply selected visual sort order."""
-        sort_mode: str = self._sort_combo_box.currentText()
-        if sort_mode == "Orden de ingreso":
+        if self._sort_mode == "Orden de ingreso":
             self._items.sort(key=lambda item: self._item_order[item.item_id])
-        elif sort_mode == "URL A-Z":
+        elif self._sort_mode == "URL A-Z":
             self._items.sort(key=lambda item: item.source_url.lower())
-        elif sort_mode == "URL Z-A":
+        elif self._sort_mode == "URL Z-A":
             self._items.sort(key=lambda item: item.source_url.lower(), reverse=True)
 
         for item_widget in self._items:

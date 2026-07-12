@@ -4,11 +4,28 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(SPECPATH)
 APP_NAME = "YouTubeDownloaderPro"
+EXCLUDED_DATA_PARTS = {"__pycache__"}
+EXCLUDED_DATA_SUFFIXES = {".log", ".py", ".pyc", ".pyo", ".tmp"}
 
-datas = [
-    (str(PROJECT_ROOT / "resources"), "resources"),
-    (str(PROJECT_ROOT / "styles"), "styles"),
-]
+
+def collect_data_files(source_directory: Path, target_directory: str) -> list[tuple[str, str]]:
+    """Collect distributable data files for PyInstaller."""
+    collected_files: list[tuple[str, str]] = []
+    for file_path in source_directory.rglob("*"):
+        if not file_path.is_file():
+            continue
+        if any(part in EXCLUDED_DATA_PARTS for part in file_path.parts):
+            continue
+        if file_path.suffix.lower() in EXCLUDED_DATA_SUFFIXES:
+            continue
+
+        relative_parent = file_path.parent.relative_to(source_directory)
+        collected_files.append((str(file_path), str(Path(target_directory) / relative_parent)))
+    return collected_files
+
+
+datas = collect_data_files(PROJECT_ROOT / "resources", "resources")
+datas += collect_data_files(PROJECT_ROOT / "styles", "styles")
 
 analysis = Analysis(
     ["app.py"],
