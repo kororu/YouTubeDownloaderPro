@@ -41,6 +41,47 @@ class SettingsTestCase(unittest.TestCase):
 
         self.assertEqual(settings.background_image_path, "")
 
+    def test_audio_options_use_safe_defaults_for_legacy_settings(self) -> None:
+        """Settings created before v0.5.0 receive non-invasive defaults."""
+        settings: Settings = Settings.from_dict({"selected_format": "mp3"})
+
+        self.assertEqual(settings.selected_audio_quality, "best")
+        self.assertFalse(settings.download_thumbnail)
+        self.assertFalse(settings.write_metadata)
+        self.assertFalse(settings.write_subtitles)
+        self.assertFalse(settings.write_auto_subtitles)
+        self.assertEqual(settings.subtitle_languages, "es,en")
+        self.assertEqual(settings.filename_template, "%(title)s.%(ext)s")
+
+    def test_advanced_audio_settings_are_loaded(self) -> None:
+        """Advanced audio and auxiliary output settings persist."""
+        settings: Settings = Settings.from_dict(
+            {
+                "selected_format": "wav",
+                "selected_audio_quality": "320",
+                "download_thumbnail": True,
+                "write_metadata": True,
+                "write_subtitles": True,
+                "write_auto_subtitles": True,
+                "subtitle_languages": " es, en ",
+                "filename_template": "%(channel)s - %(title)s.%(ext)s",
+                "create_channel_folder": True,
+                "create_playlist_folder": True,
+            }
+        )
+
+        self.assertEqual(settings.selected_format, "wav")
+        self.assertEqual(settings.selected_audio_quality, "320")
+        self.assertTrue(settings.download_thumbnail)
+        self.assertEqual(settings.subtitle_languages, "es,en")
+        self.assertTrue(settings.create_playlist_folder)
+
+    def test_unsafe_filename_template_uses_safe_default(self) -> None:
+        """Persisted templates cannot escape the selected output folder."""
+        settings: Settings = Settings.from_dict({"filename_template": "..\\outside"})
+
+        self.assertEqual(settings.filename_template, "%(title)s.%(ext)s")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,7 +15,7 @@ from config.settings import Settings
 from config.settings_manager import SettingsManager
 from core.dependency_checker import DependencyChecker, DependencyCheckResult
 from dialogs.about_dialog import AboutDialog
-from models.download_enums import DownloadFormat, DownloadQuality, DownloadStatus
+from models.download_enums import AudioQuality, DownloadFormat, DownloadQuality, DownloadStatus
 from models.download_item import DownloadItem
 from models.download_progress import DownloadProgress
 from models.playlist_metadata import PlaylistVideo
@@ -45,6 +45,15 @@ class PlaylistLoadRequest:
     quality: DownloadQuality
     playlist_range: PlaylistRange
     is_youtube_mix: bool
+    audio_quality: AudioQuality
+    download_thumbnail: bool
+    write_metadata: bool
+    write_subtitles: bool
+    write_auto_subtitles: bool
+    subtitle_languages: str
+    filename_template: str
+    create_channel_folder: bool
+    create_playlist_folder: bool
 
 
 @dataclass(slots=True)
@@ -174,6 +183,7 @@ class MainWindow(QMainWindow):
         self._toolbar_widget = ToolbarWidget(
             selected_format=self._settings.selected_format,
             selected_quality=self._settings.selected_quality,
+            selected_audio_quality=self._settings.selected_audio_quality,
             playlist_start_index=self._settings.playlist_start_index,
             playlist_end_index=self._settings.playlist_end_index,
             playlist_limit=self._settings.max_playlist_items,
@@ -233,6 +243,7 @@ class MainWindow(QMainWindow):
         self._toolbar_widget.queue_sort_changed.connect(self._queue_widget.set_sort_mode)
         self._queue_widget.queue_changed.connect(self._handle_queue_changed)
         self._settings_widget.settings_changed.connect(self._save_settings)
+        self._settings_widget.settings_warning.connect(self._show_settings_warning)
         self._log_widget.export_requested.connect(self._export_logs)
         self._queue_widget.item_removed.connect(self._remove_item_from_services)
         self._report_dependency_status()
@@ -302,7 +313,7 @@ class MainWindow(QMainWindow):
             return
         try:
             selected_format: DownloadFormat = DownloadFormat(media_format)
-            selected_quality: DownloadQuality = DownloadQuality(quality)
+            selected_quality, selected_audio_quality = self._parse_quality(selected_format, quality)
         except ValueError:
             self._show_input_error("Formato o calidad no válidos.")
             return
@@ -320,6 +331,15 @@ class MainWindow(QMainWindow):
             quality=selected_quality,
             playlist_range=playlist_range,
             is_youtube_mix=is_youtube_mix,
+            audio_quality=selected_audio_quality,
+            download_thumbnail=self._settings.download_thumbnail,
+            write_metadata=self._settings.write_metadata,
+            write_subtitles=self._settings.write_subtitles,
+            write_auto_subtitles=self._settings.write_auto_subtitles,
+            subtitle_languages=self._settings.subtitle_languages,
+            filename_template=self._settings.filename_template,
+            create_channel_folder=self._settings.create_channel_folder,
+            create_playlist_folder=self._settings.create_playlist_folder,
         )
         self._playlist_stats[request_id] = PlaylistLoadStats()
         self._start_playlist_worker(request_id, normalized_url, playlist_range)
@@ -362,14 +382,35 @@ class MainWindow(QMainWindow):
     ) -> DownloadItem | None:
         """Create a validated domain download item."""
         try:
+            selected_format: DownloadFormat = DownloadFormat(media_format)
+            video_quality, audio_quality = self._parse_quality(selected_format, quality)
             return DownloadItem.create(
                 source_url=source_url,
-                media_format=DownloadFormat(media_format),
-                quality=DownloadQuality(quality),
+                media_format=selected_format,
+                quality=video_quality,
+                audio_quality=audio_quality,
+                download_thumbnail=self._settings.download_thumbnail,
+                write_metadata=self._settings.write_metadata,
+                write_subtitles=self._settings.write_subtitles,
+                write_auto_subtitles=self._settings.write_auto_subtitles,
+                subtitle_languages=self._settings.subtitle_languages,
+                filename_template=self._settings.filename_template,
+                create_channel_folder=self._settings.create_channel_folder,
+                create_playlist_folder=self._settings.create_playlist_folder,
             )
         except ValueError:
             self._show_input_error("Formato o calidad no válidos.")
             return None
+
+    def _parse_quality(
+        self,
+        media_format: DownloadFormat,
+        selected_quality: str,
+    ) -> tuple[DownloadQuality, AudioQuality]:
+        """Parse the contextual toolbar quality for video or audio."""
+        if media_format is DownloadFormat.MP4:
+            return DownloadQuality(selected_quality), AudioQuality(self._settings.selected_audio_quality)
+        return DownloadQuality(self._settings.selected_quality), AudioQuality(selected_quality)
 
     def _start_metadata_worker(self, download_item: DownloadItem) -> None:
         """Start asynchronous metadata loading for a queue item."""
@@ -496,10 +537,19 @@ class MainWindow(QMainWindow):
                 status=DownloadStatus.READY,
                 metadata=video.to_video_metadata(),
                 playlist_index=video.index,
-                playlist_title=video.playlist_title or request.source_url,
+                playlist_title=video.playlist_title,
                 playlist_source_url=request.source_url,
                 is_youtube_mix=request.is_youtube_mix,
                 video_id=video.video_id,
+                audio_quality=request.audio_quality,
+                download_thumbnail=request.download_thumbnail,
+                write_metadata=request.write_metadata,
+                write_subtitles=request.write_subtitles,
+                write_auto_subtitles=request.write_auto_subtitles,
+                subtitle_languages=request.subtitle_languages,
+                filename_template=request.filename_template,
+                create_channel_folder=request.create_channel_folder,
+                create_playlist_folder=request.create_playlist_folder,
             )
             duplicate_key: str = download_item.duplicate_key()
             if duplicate_key in existing_duplicate_keys:
@@ -596,6 +646,7 @@ class MainWindow(QMainWindow):
             tuple(item.item_id for item in ready_items),
             Path(self._settings.output_folder),
         )
+        self._log_download_options(ready_items)
         self._log_widget.append_info(f"Descargas iniciadas: {len(ready_items)}")
         self._status_widget.set_status_message("descargando")
 
@@ -633,7 +684,27 @@ class MainWindow(QMainWindow):
 
     def _handle_download_log(self, item_id: str, message: str) -> None:
         """Display download worker log lines."""
+        if message == "Subtitles not available":
+            self._log_widget.append_warning("Subtítulos no disponibles")
+            return
         self._log_widget.append_info(message)
+
+    def _log_download_options(self, download_items: tuple[DownloadItem, ...]) -> None:
+        """Log active advanced output options without flooding the visible log."""
+        if any(item.download_thumbnail for item in download_items):
+            self._log_widget.append_info("Miniatura habilitada")
+        if any(item.write_metadata for item in download_items):
+            self._log_widget.append_info("Metadata habilitada")
+        subtitle_item: DownloadItem | None = next(
+            (item for item in download_items if item.write_subtitles or item.write_auto_subtitles),
+            None,
+        )
+        if subtitle_item is not None:
+            self._log_widget.append_info(
+                f"Subtítulos habilitados: {subtitle_item.subtitle_languages}"
+            )
+        formats: str = ", ".join(sorted({item.media_format.value.upper() for item in download_items}))
+        self._log_widget.append_info(f"Formatos seleccionados: {formats}")
 
     def _handle_download_queue_finished(self) -> None:
         """Handle queue completion."""
@@ -690,7 +761,7 @@ class MainWindow(QMainWindow):
         if "yt-dlp is not available" in normalized_message or "command not found" in normalized_message:
             return "yt-dlp no está disponible en PATH. Instálelo con winget y reinicie la aplicación."
         if "ffmpeg is required" in normalized_message:
-            return "ffmpeg es requerido para descargas MP3. Instálelo con winget y reinicie la aplicación."
+            return "ffmpeg es requerido para convertir el formato solicitado. Instálelo con winget y reinicie la aplicación."
         if "invalid json" in normalized_message:
             return "yt-dlp devolvió una respuesta inválida. Verifique la URL e inténtelo nuevamente."
         if "no selectable videos" in normalized_message:
@@ -710,6 +781,7 @@ class MainWindow(QMainWindow):
         self._toolbar_widget.set_download_preferences(
             settings.selected_format,
             settings.selected_quality,
+            settings.selected_audio_quality,
         )
         self._toolbar_widget.set_playlist_preferences(
             settings.playlist_start_index,
@@ -718,6 +790,11 @@ class MainWindow(QMainWindow):
         )
         self._log_widget.append_info("Ajustes guardados.")
         self._status_widget.set_status_message("ajustes guardados")
+
+    def _show_settings_warning(self, message: str) -> None:
+        """Show a non-invasive settings warning in log and status widgets."""
+        self._log_widget.append_warning(message)
+        self._status_widget.set_status_message("advertencia de ajustes")
 
     def _focus_settings_panel(self) -> None:
         """Move focus to the settings panel."""

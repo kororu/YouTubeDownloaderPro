@@ -9,10 +9,10 @@ from PySide6.QtCore import QThread, Signal
 
 from core.dependency_checker import DependencyChecker
 from core.process import create_text_process, request_process_termination, wait_for_process
-from models.download_enums import DownloadFormat
 from models.download_item import DownloadItem
 from models.download_progress import DownloadProgress
 from services.progress_parser import ProgressParser
+from services.output_template_builder import OutputTemplateBuilder
 from services.yt_dlp_command_builder import YtDlpCommandBuilder
 
 
@@ -32,6 +32,7 @@ class DownloadWorker(QThread):
         command_builder: YtDlpCommandBuilder | None = None,
         dependency_checker: DependencyChecker | None = None,
         progress_parser: ProgressParser | None = None,
+        output_template_builder: OutputTemplateBuilder | None = None,
     ) -> None:
         """Initialize the download worker.
 
@@ -48,6 +49,7 @@ class DownloadWorker(QThread):
         self._command_builder: YtDlpCommandBuilder = command_builder or YtDlpCommandBuilder()
         self._dependency_checker: DependencyChecker = dependency_checker or DependencyChecker()
         self._progress_parser: ProgressParser = progress_parser or ProgressParser()
+        self._output_template_builder: OutputTemplateBuilder = output_template_builder or OutputTemplateBuilder()
         self._process: subprocess.Popen[str] | None = None
         self._cancel_requested: bool = False
 
@@ -68,17 +70,26 @@ class DownloadWorker(QThread):
         if not dependency_result.yt_dlp.is_available:
             self.download_failed.emit(self.item_id, "yt-dlp is not available in PATH.")
             return
-        if self._download_item.media_format is DownloadFormat.MP3 and not dependency_result.ffmpeg.is_available:
-            self.download_failed.emit(self.item_id, "ffmpeg is required for MP3 downloads.")
+        if self._download_item.media_format.requires_ffmpeg and not dependency_result.ffmpeg.is_available:
+            self.download_failed.emit(
+                self.item_id,
+                f"ffmpeg is required for {self._download_item.media_format.value.upper()} downloads.",
+            )
             return
 
         self._output_folder.mkdir(parents=True, exist_ok=True)
-        output_template: str = str(self._output_folder / "%(title)s.%(ext)s")
+        output_template: str = self._output_template_builder.build(self._output_folder, self._download_item)
         command: list[str] = self._command_builder.build_download_command(
             source_url=self._download_item.source_url,
             output_template=output_template,
             media_format=self._download_item.media_format,
             quality=self._download_item.quality,
+            audio_quality=self._download_item.audio_quality,
+            download_thumbnail=self._download_item.download_thumbnail,
+            write_metadata=self._download_item.write_metadata,
+            write_subtitles=self._download_item.write_subtitles,
+            write_auto_subtitles=self._download_item.write_auto_subtitles,
+            subtitle_languages=self._download_item.subtitle_languages,
         )
 
         try:
@@ -98,6 +109,8 @@ class DownloadWorker(QThread):
                 stripped_line: str = line.rstrip()
                 if stripped_line:
                     self.log_received.emit(self.item_id, stripped_line)
+                    if self._subtitles_unavailable(stripped_line):
+                        self.log_received.emit(self.item_id, "Subtitles not available")
                 progress: DownloadProgress | None = self._progress_parser.parse(line)
                 if progress is not None:
                     self.progress_changed.emit(self.item_id, progress)
@@ -110,3 +123,9 @@ class DownloadWorker(QThread):
             self.download_completed.emit(self.item_id)
             return
         self.download_failed.emit(self.item_id, f"yt-dlp exited with code {return_code}.")
+
+    @staticmethod
+    def _subtitles_unavailable(log_line: str) -> bool:
+        """Return whether yt-dlp reports that subtitles are unavailable."""
+        normalized_line: str = log_line.lower()
+        return "no subtitles" in normalized_line or "does not have subtitles" in normalized_line

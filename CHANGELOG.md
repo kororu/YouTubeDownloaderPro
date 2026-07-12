@@ -14,6 +14,22 @@ Todos los cambios relevantes del proyecto se documentan en este archivo.
 
 Esta sección no cambia la versión visible ni representa nuevas funcionalidades implementadas.
 
+## v0.5.0 - 2026-07-12
+
+- Actualizada la versión visible y metadata de Windows a `v0.5.0`.
+- Añadidos M4A, OPUS, FLAC, WAV y audio original/best audio sin romper MP4/MP3.
+- Añadidos bitrates MP3 best/original, 128, 192, 256 y 320 kbps.
+- Añadidas opciones de miniatura, metadata JSON, subtítulos publicados y automáticos e idiomas configurables.
+- Añadidas plantillas de nombre predefinidas y personalizadas con validación segura.
+- Añadidas carpetas opcionales por canal y playlist.
+- Extendida la persistencia de settings y cola con defaults compatibles con JSON antiguo.
+- Mejorados los errores de FFmpeg y los logs de opciones activas y subtítulos no disponibles.
+- Mantenida la ejecución silenciosa de procesos externos en Windows.
+- Añadidas pruebas para formatos, comandos, persistencia y plantillas de salida.
+- Verificados 35 tests, compilación, arranque, build PyInstaller, ejecutable y portable `v0.5.0`.
+
+> Estado: implementado en el working tree; pendiente de pruebas manuales con descargas reales y validación final del portable.
+
 ## v0.3.0 - 2026-07-07
 
 - Actualizada la versión visible y la metadata de release a v0.3.0.

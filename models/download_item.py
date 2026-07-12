@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import Any
+from enum import StrEnum
+from typing import Any, TypeVar
 from urllib.parse import parse_qs, parse_qsl, urlencode, urlparse, urlunparse
 from uuid import uuid4
 
-from models.download_enums import DownloadFormat, DownloadQuality, DownloadStatus
+from models.download_enums import AudioQuality, DownloadFormat, DownloadQuality, DownloadStatus
 from models.video_metadata import VideoMetadata
+
+EnumValue = TypeVar("EnumValue", bound=StrEnum)
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +32,15 @@ class DownloadItem:
         playlist_source_url: Playlist or YouTube Mix source URL when known.
         is_youtube_mix: Whether the item comes from a YouTube Mix.
         video_id: Stable video identifier when known.
+        audio_quality: Selected MP3 bitrate or best/original audio quality.
+        download_thumbnail: Whether yt-dlp writes the source thumbnail.
+        write_metadata: Whether yt-dlp writes an info JSON file.
+        write_subtitles: Whether published subtitles are requested.
+        write_auto_subtitles: Whether automatic subtitles are requested.
+        subtitle_languages: yt-dlp subtitle language selector.
+        filename_template: Safe yt-dlp filename template.
+        create_channel_folder: Whether output is grouped by channel.
+        create_playlist_folder: Whether playlist output uses its own folder.
     """
 
     item_id: str
@@ -44,6 +56,15 @@ class DownloadItem:
     playlist_source_url: str | None = None
     is_youtube_mix: bool = False
     video_id: str | None = None
+    audio_quality: AudioQuality = AudioQuality.BEST
+    download_thumbnail: bool = False
+    write_metadata: bool = False
+    write_subtitles: bool = False
+    write_auto_subtitles: bool = False
+    subtitle_languages: str = "es,en"
+    filename_template: str = "%(title)s.%(ext)s"
+    create_channel_folder: bool = False
+    create_playlist_folder: bool = False
 
     @classmethod
     def create(
@@ -51,6 +72,15 @@ class DownloadItem:
         source_url: str,
         media_format: DownloadFormat,
         quality: DownloadQuality,
+        audio_quality: AudioQuality = AudioQuality.BEST,
+        download_thumbnail: bool = False,
+        write_metadata: bool = False,
+        write_subtitles: bool = False,
+        write_auto_subtitles: bool = False,
+        subtitle_languages: str = "es,en",
+        filename_template: str = "%(title)s.%(ext)s",
+        create_channel_folder: bool = False,
+        create_playlist_folder: bool = False,
     ) -> "DownloadItem":
         """Create a new queue item.
 
@@ -68,6 +98,15 @@ class DownloadItem:
             media_format=media_format,
             quality=quality,
             status=DownloadStatus.LOADING_METADATA,
+            audio_quality=audio_quality,
+            download_thumbnail=download_thumbnail,
+            write_metadata=write_metadata,
+            write_subtitles=write_subtitles,
+            write_auto_subtitles=write_auto_subtitles,
+            subtitle_languages=subtitle_languages,
+            filename_template=filename_template,
+            create_channel_folder=create_channel_folder,
+            create_playlist_folder=create_playlist_folder,
         )
 
     def with_metadata(self, metadata: VideoMetadata) -> "DownloadItem":
@@ -83,21 +122,7 @@ class DownloadItem:
         progress_percentage: float = self.progress_percentage
         if status is DownloadStatus.COMPLETED:
             progress_percentage = 100.0
-        return DownloadItem(
-            item_id=self.item_id,
-            source_url=self.source_url,
-            media_format=self.media_format,
-            quality=self.quality,
-            status=status,
-            metadata=self.metadata,
-            error_message=self.error_message,
-            progress_percentage=progress_percentage,
-            playlist_index=self.playlist_index,
-            playlist_title=self.playlist_title,
-            playlist_source_url=self.playlist_source_url,
-            is_youtube_mix=self.is_youtube_mix,
-            video_id=self.video_id,
-        )
+        return replace(self, status=status, progress_percentage=progress_percentage)
 
     def with_progress(self, progress_percentage: float) -> "DownloadItem":
         """Create an item with updated progress."""
@@ -137,7 +162,10 @@ class DownloadItem:
             "item_id": self.item_id,
             "source_url": self.source_url,
             "media_format": self.media_format.value,
+            "output_format": "audio" if self.media_format.is_audio else "video",
+            "audio_format": self.media_format.value if self.media_format.is_audio else None,
             "quality": self.quality.value,
+            "audio_quality": self.audio_quality.value,
             "status": self.status.value,
             "metadata": metadata_data,
             "error_message": self.error_message,
@@ -147,6 +175,14 @@ class DownloadItem:
             "playlist_source_url": self.playlist_source_url,
             "is_youtube_mix": self.is_youtube_mix,
             "video_id": self.video_id,
+            "thumbnail_enabled": self.download_thumbnail,
+            "metadata_enabled": self.write_metadata,
+            "subtitles_enabled": self.write_subtitles,
+            "auto_subtitles_enabled": self.write_auto_subtitles,
+            "subtitle_languages": self.subtitle_languages,
+            "filename_template": self.filename_template,
+            "channel_folder_enabled": self.create_channel_folder,
+            "playlist_folder_enabled": self.create_playlist_folder,
         }
 
     @classmethod
@@ -178,11 +214,16 @@ class DownloadItem:
         if status in {DownloadStatus.QUEUED, DownloadStatus.DOWNLOADING}:
             status = DownloadStatus.READY
 
+        media_format: DownloadFormat = _read_download_format(data)
         return cls(
             item_id=_read_string(data, "item_id", str(uuid4())),
             source_url=_read_string(data, "source_url", ""),
-            media_format=DownloadFormat(_read_string(data, "media_format", DownloadFormat.MP4.value)),
-            quality=DownloadQuality(_read_string(data, "quality", DownloadQuality.BEST.value)),
+            media_format=media_format,
+            quality=_read_enum(
+                DownloadQuality,
+                _read_string(data, "quality", DownloadQuality.BEST.value),
+                DownloadQuality.BEST,
+            ),
             status=status,
             metadata=metadata,
             error_message=_read_optional_string(data, "error_message"),
@@ -192,6 +233,19 @@ class DownloadItem:
             playlist_source_url=_read_optional_string(data, "playlist_source_url"),
             is_youtube_mix=_read_bool(data, "is_youtube_mix", False),
             video_id=_read_optional_string(data, "video_id"),
+            audio_quality=_read_enum(
+                AudioQuality,
+                _read_string(data, "audio_quality", AudioQuality.BEST.value),
+                AudioQuality.BEST,
+            ),
+            download_thumbnail=_read_bool(data, "thumbnail_enabled", False),
+            write_metadata=_read_bool(data, "metadata_enabled", False),
+            write_subtitles=_read_bool(data, "subtitles_enabled", False),
+            write_auto_subtitles=_read_bool(data, "auto_subtitles_enabled", False),
+            subtitle_languages=_read_string(data, "subtitle_languages", "es,en"),
+            filename_template=_read_string(data, "filename_template", "%(title)s.%(ext)s"),
+            create_channel_folder=_read_bool(data, "channel_folder_enabled", False),
+            create_playlist_folder=_read_bool(data, "playlist_folder_enabled", False),
         )
 
 
@@ -233,6 +287,28 @@ def _read_bool(data: dict[str, Any], key: str, default: bool) -> bool:
     if isinstance(value, bool):
         return value
     return default
+
+
+def _read_download_format(data: dict[str, Any]) -> DownloadFormat:
+    """Read new or legacy output format fields safely."""
+    media_format_value: str = _read_string(data, "media_format", "")
+    if not media_format_value:
+        media_format_value = _read_string(data, "audio_format", "")
+    if not media_format_value and _read_string(data, "output_format", "") == "video":
+        media_format_value = DownloadFormat.MP4.value
+    return _read_enum(DownloadFormat, media_format_value, DownloadFormat.MP4)
+
+
+def _read_enum(
+    enum_type: type[EnumValue],
+    value: str,
+    default: EnumValue,
+) -> EnumValue:
+    """Read a string enum value with a backward-compatible default."""
+    try:
+        return enum_type(value)
+    except ValueError:
+        return default
 
 
 def _read_video_id_from_url(source_url: str) -> str | None:

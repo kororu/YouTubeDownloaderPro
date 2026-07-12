@@ -4,7 +4,7 @@
 
 - Proyecto: YouTube Downloader Pro.
 - Autor: Ariel Ponce.
-- Versión visible actual: `v0.3.0`.
+- Versión visible actual: `v0.5.0`.
 - Plataforma objetivo: Windows.
 - Stack: Python 3.12+, PySide6, QThread, `subprocess`, `yt-dlp`, `ffmpeg`, JSON, QSS y PyInstaller.
 - Distribución: ejecutable PyInstaller `onedir` y paquete portable.
@@ -18,7 +18,10 @@
 - Imagen de fondo opcional con escalado tipo cover.
 - Cola basada en `QScrollArea` y `QueueItemWidget`.
 - `LogWidget` con exportación, `StatusWidget`, `SettingsWidget`, footer y `AboutDialog`.
-- Formatos MP4 y MP3, selector de calidad y carpeta de salida.
+- Video MP4 y audio MP3, M4A, OPUS, FLAC, WAV y audio original/best audio.
+- Calidad de video hasta 2160p y bitrates MP3 best, 128, 192, 256 y 320 kbps.
+- Opciones persistentes de miniatura, metadata JSON y subtítulos.
+- Plantillas de nombre y carpetas opcionales por canal o playlist.
 - Persistencia JSON de ajustes y cola.
 - Descargas mediante `yt-dlp` y uso de FFmpeg para conversión/procesamiento.
 - Verificación de `yt-dlp` y `ffmpeg` en `PATH`.
@@ -29,7 +32,7 @@
 - Scripts `scripts\build_windows.ps1` y `scripts\package_portable.ps1`.
 - Launcher `run_app.bat` y guía `README_INSTALL.txt` para el portable.
 
-## En progreso en v0.3.0
+## En progreso en v0.5.0
 
 Las siguientes mejoras están implementadas en el working tree, pero siguen pendientes de validación manual completa y de su proceso normal de commit/release:
 
@@ -42,10 +45,15 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 - Validación de rangos vacíos y protección contra bloques superiores a 500 videos.
 - Normalización de URL como respaldo para la prevención de duplicados.
 - Preparación automatizada del paquete portable.
+- Persistencia compatible de opciones de audio y archivos auxiliares en settings y cola.
+- Comandos `yt-dlp` para M4A, OPUS, FLAC, WAV y best audio.
+- Validaciones no invasivas para WAV, extensiones variables, archivos extra y subtítulos.
 
 ## Pendiente de verificación
 
 - Ejecutar descargas MP4 y MP3 reales desde el `.exe` sin ventanas emergentes de `yt-dlp` o `ffmpeg`.
+- Probar MP3 192/320 kbps, M4A, OPUS, FLAC, WAV y best audio con URLs reales.
+- Confirmar miniaturas, metadata, subtítulos, plantillas y carpetas con medios reales.
 - Probar rangos `1-200`, `201-400` y `401-600` con playlists reales.
 - Probar YouTube Mix de 400, 1000 o más entradas sin bloquear la interfaz.
 - Confirmar `Cargar siguientes`, deduplicación y persistencia por URL entre sesiones.
@@ -58,7 +66,6 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 ## Planificado
 
 - `v0.4.0`: gestión avanzada de cola y playlists.
-- `v0.5.0`: formatos de audio avanzados, incluido WAV, y opciones de metadata.
 - `v0.6.0`: mejora visual y de experiencia de usuario.
 - `v0.7.0`: historial completo y control de duplicados.
 - `v0.8.0`: configuración avanzada y diagnóstico.
@@ -110,7 +117,7 @@ Contenido esperado:
 
 ## WAV y calidad de audio
 
-WAV se planifica para `v0.5.0`. Es posible mediante `yt-dlp` y FFmpeg, pero genera archivos grandes y no recupera información perdida si la fuente ya está comprimida. Resulta útil para edición porque evita una segunda compresión. Para uso normal convienen MP3, M4A u OPUS; para máxima calidad práctica se debe evaluar `best audio`, FLAC o WAV según el flujo de trabajo.
+WAV está disponible desde `v0.5.0` mediante `yt-dlp` y FFmpeg. Genera archivos grandes y no recupera información perdida si la fuente ya está comprimida. Solo evita una compresión adicional y resulta útil para edición. Para uso normal convienen MP3, M4A u OPUS; para máxima calidad práctica se debe evaluar `best audio`, FLAC o WAV según el flujo de trabajo.
 
 ## Uso responsable
 
@@ -130,16 +137,16 @@ git diff --stat
 
 ## Próximo paso recomendado
 
-Completar la matriz de pruebas manuales de `v0.3.0` con videos, MP4, MP3, playlists grandes, YouTube Mix, rangos consecutivos y el paquete portable en otro PC. Corregir solo los defectos confirmados antes de etiquetar o publicar la versión.
+Completar la matriz de pruebas manuales de `v0.5.0` con MP4, todos los formatos de audio, archivos auxiliares, playlists, plantillas y el paquete portable en otro PC. Corregir solo los defectos confirmados antes de etiquetar o publicar la versión.
 
 ## Validaciones automáticas realizadas
 
-- `python -m unittest discover -s tests -v`: 24 pruebas correctas.
+- `python -m unittest discover -s tests -v`: 35 pruebas correctas.
 - `python -m compileall app.py config core models services resources ui widgets dialogs styles tests`: correcto.
 - Arranque de `python app.py` en modo Qt offscreen: correcto.
-- `scripts\build_windows.ps1`: correcto.
+- `scripts\build_windows.ps1`: build `v0.5.0` correcto.
 - Arranque offscreen de `dist\YouTubeDownloaderPro\YouTubeDownloaderPro.exe`: correcto.
-- `scripts\package_portable.ps1`: correcto.
+- `scripts\package_portable.ps1 -SkipBuild`: portable `v0.5.0` correcto.
 - `git diff --check`: correcto.
 - `python -m pytest`: no ejecutado porque `pytest` no está instalado; se utilizó `unittest` sin agregar dependencias.
 

@@ -6,7 +6,7 @@
 
 Project name: YouTube Downloader Pro
 Author: Ariel Ponce
-Visible version: v0.3.0
+Visible version: v0.5.0
 Target platform: Windows
 Final distribution: PyInstaller executable
 Main technology stack: Python, PySide6, QThread, subprocess.Popen, yt-dlp, ffmpeg, JSON, QSS
@@ -182,7 +182,7 @@ The footer must visibly show:
 
 ```text
 Autor: Ariel Ponce
-Versión: v0.3.0
+Versión: v0.5.0
 ```
 
 Initial main window:
@@ -253,9 +253,9 @@ The final application must support:
 
 ## Roadmap oficial hasta v1.0.0
 
-La versión visible permanece en `v0.3.0`. Cada entrada del roadmap debe identificarse como implementada, en progreso, planificada o sugerida. Nunca se debe presentar una función planificada como implementada.
+La versión visible permanece en `v0.5.0`. Cada entrada del roadmap debe identificarse como implementada, en progreso, planificada o sugerida. Nunca se debe presentar una función planificada como implementada.
 
-### Estado actual — v0.3.0
+### Estado actual — v0.5.0
 
 Implementado en el working tree, pero pendiente de validación manual completa y release:
 
@@ -267,13 +267,16 @@ Implementado en el working tree, pero pendiente de validación manual completa y
 * Prevención de duplicados por identificador de video o URL.
 * Mejoras de cancelación y logs de progreso de playlists.
 * Preparación del paquete portable.
+* Audio MP3, M4A, OPUS, FLAC, WAV y audio original/best audio.
+* Bitrates MP3, miniaturas, metadata, subtítulos y plantillas de nombre.
+* Carpetas opcionales por canal y playlist con persistencia compatible.
 
 Todavía se requiere validación manual de descargas MP4/MP3 reales, playlists y Mix grandes, ejecución silenciosa desde el `.exe` y uso del portable en otro PC Windows.
 
 ### Releases planificadas
 
 * `v0.4.0 — Queue and playlist advanced management`: orden, prioridades, pausa/reanudación, reintentos, limpieza, progreso por playlist, detección de archivos descargados, importación/exportación de cola e historial básico.
-* `v0.5.0 — Audio and format improvements`: MP3, M4A, OPUS, FLAC, WAV, best audio, perfiles de calidad, miniaturas, metadata, subtítulos, plantillas de nombres y carpetas por canal o playlist.
+* `v0.5.0 — Audio and format improvements`: implementado en el working tree con MP3, M4A, OPUS, FLAC, WAV, best audio, bitrates MP3, miniaturas, metadata, subtítulos, plantillas de nombres y carpetas por canal o playlist; pendiente de pruebas manuales con medios reales.
 * `v0.6.0 — Visual polish and UX`: toolbar agrupada o en dos filas, correcciones de espaciado y recorte, controles mejorados, fondo adaptable, opacidad, modo compacto, miniaturas, iconos, pantallas vacías, tooltips y atajos.
 * `v0.7.0 — Download history and duplicate control`: historial buscable, control de duplicados, acciones sobre archivos, reintentos, favoritos e importación/exportación.
 * `v0.8.0 — Advanced settings and diagnostics`: ancho de banda cuando sea compatible, concurrencia, cookies opcionales con advertencias, proxy, diagnóstico, dependencias, reset e importación/exportación de ajustes.
@@ -290,7 +293,7 @@ Todavía se requiere validación manual de descargas MP4/MP3 reales, playlists y
 
 ### Guía sobre WAV
 
-WAV está planificado para `v0.5.0` mediante `yt-dlp` y FFmpeg. Genera archivos grandes sin compresión, pero no restaura calidad ya perdida en una fuente comprimida. Es útil para edición porque evita otra compresión con pérdida. Para uso normal, MP3, M4A u OPUS suelen ser más prácticos; se debe elegir best audio, FLAC o WAV según la necesidad real.
+WAV está disponible desde `v0.5.0` mediante `yt-dlp` y FFmpeg. Genera archivos grandes sin compresión, pero no restaura calidad ya perdida en una fuente comprimida. Es útil para edición porque evita otra compresión con pérdida. Para uso normal, MP3, M4A u OPUS suelen ser más prácticos; se debe elegir best audio, FLAC o WAV según la necesidad real.
 
 ### Uso responsable
 
@@ -536,7 +539,7 @@ Requirements:
 * Footer must show:
 
   * Autor: Ariel Ponce
-  * Versión: v0.3.0
+  * Versión: v0.5.0
 * Do not implement download logic yet.
 * Do not use QTreeWidget.
 * QueueWidget must be based on QScrollArea.

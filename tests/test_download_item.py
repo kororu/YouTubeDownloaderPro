@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from models.download_enums import DownloadFormat, DownloadQuality, DownloadStatus
+from models.download_enums import AudioQuality, DownloadFormat, DownloadQuality, DownloadStatus
 from models.download_item import DownloadItem
 
 
@@ -54,6 +54,47 @@ class DownloadItemTestCase(unittest.TestCase):
         )
 
         self.assertEqual(first_item.duplicate_key(), second_item.duplicate_key())
+
+    def test_advanced_audio_options_round_trip(self) -> None:
+        """Queue JSON preserves v0.5.0 download options."""
+        item: DownloadItem = DownloadItem(
+            item_id="audio",
+            source_url="https://example.com/audio",
+            media_format=DownloadFormat.FLAC,
+            quality=DownloadQuality.BEST,
+            status=DownloadStatus.READY,
+            audio_quality=AudioQuality.K320,
+            download_thumbnail=True,
+            write_metadata=True,
+            write_subtitles=True,
+            write_auto_subtitles=True,
+            subtitle_languages="es,en",
+            filename_template="%(channel)s - %(title)s.%(ext)s",
+            create_channel_folder=True,
+            create_playlist_folder=True,
+        )
+
+        restored_item: DownloadItem = DownloadItem.from_dict(item.to_dict())
+
+        self.assertEqual(restored_item, item)
+        self.assertEqual(item.to_dict()["output_format"], "audio")
+        self.assertEqual(item.to_dict()["audio_format"], "flac")
+
+    def test_legacy_queue_item_uses_advanced_defaults(self) -> None:
+        """Queue entries from older versions remain loadable."""
+        restored_item: DownloadItem = DownloadItem.from_dict(
+            {
+                "item_id": "legacy",
+                "source_url": "https://example.com/video",
+                "media_format": "mp3",
+                "quality": "best",
+                "status": "ready",
+            }
+        )
+
+        self.assertEqual(restored_item.media_format, DownloadFormat.MP3)
+        self.assertEqual(restored_item.audio_quality, AudioQuality.BEST)
+        self.assertFalse(restored_item.download_thumbnail)
 
 
 if __name__ == "__main__":

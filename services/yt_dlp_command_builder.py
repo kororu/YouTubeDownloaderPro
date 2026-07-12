@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from models.download_enums import DownloadFormat, DownloadQuality
+from models.download_enums import AudioQuality, DownloadFormat, DownloadQuality
 from models.playlist_range import PlaylistRange
 
 
@@ -87,6 +87,12 @@ class YtDlpCommandBuilder:
         output_template: str,
         media_format: DownloadFormat,
         quality: DownloadQuality,
+        audio_quality: AudioQuality = AudioQuality.BEST,
+        download_thumbnail: bool = False,
+        write_metadata: bool = False,
+        write_subtitles: bool = False,
+        write_auto_subtitles: bool = False,
+        subtitle_languages: str = "es,en",
     ) -> list[str]:
         """Build a future download command without executing it.
 
@@ -95,17 +101,52 @@ class YtDlpCommandBuilder:
             output_template: yt-dlp output template.
             media_format: Desired media format.
             quality: Desired quality.
+            audio_quality: MP3 bitrate or best/original selection.
+            download_thumbnail: Whether to write the source thumbnail.
+            write_metadata: Whether to write an info JSON file.
+            write_subtitles: Whether to write published subtitles.
+            write_auto_subtitles: Whether to write automatic subtitles.
+            subtitle_languages: Comma-separated yt-dlp language selector.
 
         Returns:
             Command arguments ready for future download execution.
         """
-        command: list[str] = [self.executable_name, "--newline", "-o", output_template]
-        if media_format is DownloadFormat.MP3:
-            command.extend(["-x", "--audio-format", "mp3"])
-        else:
+        command: list[str] = [
+            self.executable_name,
+            "--newline",
+            "--windows-filenames",
+            "-o",
+            output_template,
+        ]
+        if media_format is DownloadFormat.MP4:
             command.extend(["--merge-output-format", "mp4", "-f", self._video_format_selector(quality)])
+        else:
+            command.extend(["-f", self._audio_format_selector(media_format)])
+            if media_format is not DownloadFormat.BEST_AUDIO:
+                command.extend(["-x", "--audio-format", media_format.value])
+            if media_format is DownloadFormat.MP3 and audio_quality is not AudioQuality.BEST:
+                command.extend(["--audio-quality", f"{audio_quality.value}K"])
+        if download_thumbnail:
+            command.append("--write-thumbnail")
+        if write_metadata:
+            command.append("--write-info-json")
+        if write_subtitles:
+            command.append("--write-subs")
+        if write_auto_subtitles:
+            command.append("--write-auto-subs")
+        if write_subtitles or write_auto_subtitles:
+            command.extend(["--sub-langs", subtitle_languages])
         command.append(source_url)
         return command
+
+    @staticmethod
+    def _audio_format_selector(media_format: DownloadFormat) -> str:
+        """Build a best-audio selector that prefers matching source codecs."""
+        if media_format is DownloadFormat.M4A:
+            return "bestaudio[ext=m4a]/bestaudio/best"
+        if media_format is DownloadFormat.OPUS:
+            return "bestaudio[acodec^=opus]/bestaudio/best"
+        return "bestaudio/best"
 
     @staticmethod
     def _video_format_selector(quality: DownloadQuality) -> str:

@@ -15,8 +15,17 @@ class Settings:
         output_folder: Default folder used for downloaded files.
         selected_format: Preferred media format.
         selected_quality: Preferred video quality.
+        selected_audio_quality: Preferred MP3 bitrate or best/original audio.
         theme: Active visual theme name, forced to dark for compatibility.
         background_image_path: Optional custom application background image path.
+        download_thumbnail: Whether downloads include a thumbnail file.
+        write_metadata: Whether downloads include an info JSON file.
+        write_subtitles: Whether published subtitles are requested.
+        write_auto_subtitles: Whether automatic subtitles are requested.
+        subtitle_languages: Comma-separated yt-dlp subtitle languages.
+        filename_template: Safe yt-dlp filename template.
+        create_channel_folder: Whether output is grouped by channel.
+        create_playlist_folder: Whether playlist output uses its own folder.
         max_playlist_items: Maximum playlist or YouTube Mix videos processed per request.
         playlist_start_index: Default one-based playlist start index.
         playlist_end_index: Optional default playlist end index, or 0 for automatic limit.
@@ -30,8 +39,17 @@ class Settings:
     output_folder: str
     selected_format: str
     selected_quality: str
+    selected_audio_quality: str
     theme: str
     background_image_path: str
+    download_thumbnail: bool
+    write_metadata: bool
+    write_subtitles: bool
+    write_auto_subtitles: bool
+    subtitle_languages: str
+    filename_template: str
+    create_channel_folder: bool
+    create_playlist_folder: bool
     max_playlist_items: int
     playlist_start_index: int
     playlist_end_index: int
@@ -52,8 +70,17 @@ class Settings:
             output_folder=str(Path.home() / "Downloads" / "YouTubeDownloaderPro"),
             selected_format="mp4",
             selected_quality="best",
+            selected_audio_quality="best",
             theme="dark",
             background_image_path="",
+            download_thumbnail=False,
+            write_metadata=False,
+            write_subtitles=False,
+            write_auto_subtitles=False,
+            subtitle_languages="es,en",
+            filename_template="%(title)s.%(ext)s",
+            create_channel_folder=False,
+            create_playlist_folder=False,
             max_playlist_items=200,
             playlist_start_index=1,
             playlist_end_index=0,
@@ -88,7 +115,7 @@ class Settings:
                 data,
                 "selected_format",
                 defaults.selected_format,
-                ("mp4", "mp3"),
+                ("mp4", "mp3", "m4a", "opus", "flac", "wav", "best_audio"),
             ),
             selected_quality=_read_choice(
                 data,
@@ -96,8 +123,34 @@ class Settings:
                 defaults.selected_quality,
                 ("480", "720", "1080", "1440", "2160", "best"),
             ),
+            selected_audio_quality=_read_choice(
+                data,
+                "selected_audio_quality",
+                defaults.selected_audio_quality,
+                ("best", "128", "192", "256", "320"),
+            ),
             theme="dark",
             background_image_path=_read_background_image_path(data, defaults.background_image_path),
+            download_thumbnail=_read_bool(data, "download_thumbnail", defaults.download_thumbnail),
+            write_metadata=_read_bool(data, "write_metadata", defaults.write_metadata),
+            write_subtitles=_read_bool(data, "write_subtitles", defaults.write_subtitles),
+            write_auto_subtitles=_read_bool(data, "write_auto_subtitles", defaults.write_auto_subtitles),
+            subtitle_languages=_normalize_subtitle_languages(
+                _read_string(data, "subtitle_languages", defaults.subtitle_languages)
+            ),
+            filename_template=_normalize_filename_template(
+                _read_string(data, "filename_template", defaults.filename_template)
+            ),
+            create_channel_folder=_read_bool(
+                data,
+                "create_channel_folder",
+                defaults.create_channel_folder,
+            ),
+            create_playlist_folder=_read_bool(
+                data,
+                "create_playlist_folder",
+                defaults.create_playlist_folder,
+            ),
             max_playlist_items=_read_playlist_limit(data, defaults.max_playlist_items),
             playlist_start_index=playlist_start_index,
             playlist_end_index=_read_playlist_end_index(
@@ -151,7 +204,16 @@ class Settings:
         output_folder: str,
         selected_format: str,
         selected_quality: str,
+        selected_audio_quality: str,
         background_image_path: str,
+        download_thumbnail: bool,
+        write_metadata: bool,
+        write_subtitles: bool,
+        write_auto_subtitles: bool,
+        subtitle_languages: str,
+        filename_template: str,
+        create_channel_folder: bool,
+        create_playlist_folder: bool,
         max_playlist_items: int,
         playlist_start_index: int,
         playlist_end_index: int,
@@ -177,10 +239,31 @@ class Settings:
         return replace(
             self,
             output_folder=normalized_output_folder,
-            selected_format=selected_format,
-            selected_quality=selected_quality,
+            selected_format=_normalize_choice(
+                selected_format,
+                self.selected_format,
+                ("mp4", "mp3", "m4a", "opus", "flac", "wav", "best_audio"),
+            ),
+            selected_quality=_normalize_choice(
+                selected_quality,
+                self.selected_quality,
+                ("480", "720", "1080", "1440", "2160", "best"),
+            ),
+            selected_audio_quality=_normalize_choice(
+                selected_audio_quality,
+                self.selected_audio_quality,
+                ("best", "128", "192", "256", "320"),
+            ),
             theme="dark",
             background_image_path=normalized_background_image_path,
+            download_thumbnail=download_thumbnail,
+            write_metadata=write_metadata,
+            write_subtitles=write_subtitles,
+            write_auto_subtitles=write_auto_subtitles,
+            subtitle_languages=_normalize_subtitle_languages(subtitle_languages),
+            filename_template=_normalize_filename_template(filename_template),
+            create_channel_folder=create_channel_folder,
+            create_playlist_folder=create_playlist_folder,
             max_playlist_items=_normalize_playlist_limit(max_playlist_items),
             playlist_start_index=max(1, playlist_start_index),
             playlist_end_index=_normalize_playlist_end_index(playlist_end_index, playlist_start_index),
@@ -207,6 +290,42 @@ def _read_choice(
     if value in allowed_values:
         return value
     return default
+
+
+def _normalize_choice(value: str, default: str, allowed_values: tuple[str, ...]) -> str:
+    """Normalize a direct preference value to an allowed string."""
+    if value in allowed_values:
+        return value
+    return default
+
+
+def _read_bool(data: dict[str, Any], key: str, default: bool) -> bool:
+    """Read a boolean setting."""
+    value: Any = data.get(key)
+    if isinstance(value, bool):
+        return value
+    return default
+
+
+def _normalize_subtitle_languages(value: str) -> str:
+    """Normalize a comma-separated yt-dlp subtitle language selector."""
+    languages: list[str] = [language.strip() for language in value.split(",") if language.strip()]
+    return ",".join(languages) or "es,en"
+
+
+def _normalize_filename_template(value: str) -> str:
+    """Return a non-empty yt-dlp filename template with an extension token."""
+    normalized_value: str = value.strip()
+    if (
+        not normalized_value
+        or "/" in normalized_value
+        or "\\" in normalized_value
+        or ".." in normalized_value
+    ):
+        return "%(title)s.%(ext)s"
+    if "%(ext)s" not in normalized_value:
+        return f"{normalized_value}.%(ext)s"
+    return normalized_value
 
 
 def _read_background_image_path(data: dict[str, Any], default: str) -> str:

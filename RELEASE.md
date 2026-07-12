@@ -3,12 +3,12 @@
 ## Estado de versión
 
 - Producto: YouTube Downloader Pro.
-- Versión visible actual: `0.3.0`.
+- Versión visible actual: `0.5.0`.
 - Plataforma: Windows.
 - Formato: ejecutable PyInstaller `onedir` y paquete portable.
-- Estado: mejoras de `v0.3.0` presentes en el working tree; release pendiente de validación manual completa.
+- Estado: mejoras de `v0.5.0` presentes en el working tree; release pendiente de validación manual completa.
 
-Este documento no cambia el número de versión ni implica que `v0.3.0` esté publicada.
+Este documento no implica que `v0.5.0` esté publicada.
 
 ## Requisitos de build
 
@@ -36,7 +36,7 @@ dist\YouTubeDownloaderPro\YouTubeDownloaderPro.exe
 release\YouTubeDownloaderPro_Portable\
 ```
 
-## Validación obligatoria para v0.3.0
+## Validación obligatoria para v0.5.0
 
 ```powershell
 python app.py
@@ -57,6 +57,10 @@ Comprobar manualmente:
 - YouTube Mix grande sin bloqueo de la interfaz.
 - Paquete portable completo en otro PC Windows sin VS Code.
 - Dependencias faltantes y ejecución de `install_dependencies.bat`.
+- MP3 a 192 y 320 kbps, M4A, OPUS, FLAC, WAV y audio original.
+- Miniatura, metadata JSON, subtítulos normales/automáticos e idiomas.
+- Plantillas de nombre y carpetas por canal/playlist.
+- Confirmar que WAV no recibe opciones de bitrate y que best audio conserva una extensión razonable.
 
 ## Criterios de publicación
 
@@ -68,7 +72,7 @@ Comprobar manualmente:
 
 ## Validación local más reciente
 
-El 2026-07-12 se completaron correctamente 24 pruebas con `unittest`, `compileall`, el arranque offscreen de `python app.py`, el build PyInstaller, el arranque offscreen del `.exe` y la generación del paquete portable. Continúan pendientes las descargas reales MP4/MP3, las playlists/Mix grandes y la prueba del portable en otro PC.
+El 2026-07-12 se completaron correctamente 35 pruebas con `unittest`, `compileall`, el arranque offscreen de `python app.py`, el build PyInstaller `v0.5.0`, el arranque offscreen del `.exe` y la generación del paquete portable `v0.5.0`. Continúan pendientes las descargas reales MP4/audio, los archivos auxiliares, las playlists/Mix grandes y la prueba del portable en otro PC.
 
 ## Alcance futuro
 

@@ -37,6 +37,15 @@ class QueueItemData:
     playlist_source_url: str | None = None
     is_youtube_mix: bool = False
     video_id: str | None = None
+    audio_quality: str = "best"
+    download_thumbnail: bool = False
+    write_metadata: bool = False
+    write_subtitles: bool = False
+    write_auto_subtitles: bool = False
+    subtitle_languages: str = "es,en"
+    filename_template: str = "%(title)s.%(ext)s"
+    create_channel_folder: bool = False
+    create_playlist_folder: bool = False
 
     @classmethod
     def from_download_item(cls, download_item: DownloadItem) -> "QueueItemData":
@@ -69,6 +78,15 @@ class QueueItemData:
             playlist_source_url=download_item.playlist_source_url,
             is_youtube_mix=download_item.is_youtube_mix,
             video_id=download_item.video_id,
+            audio_quality=download_item.audio_quality.value,
+            download_thumbnail=download_item.download_thumbnail,
+            write_metadata=download_item.write_metadata,
+            write_subtitles=download_item.write_subtitles,
+            write_auto_subtitles=download_item.write_auto_subtitles,
+            subtitle_languages=download_item.subtitle_languages,
+            filename_template=download_item.filename_template,
+            create_channel_folder=download_item.create_channel_folder,
+            create_playlist_folder=download_item.create_playlist_folder,
         )
 
 
@@ -118,7 +136,7 @@ class QueueItemWidget(QFrame):
 
     def to_download_item(self) -> DownloadItem:
         """Return the current display data as a download item."""
-        from models.download_enums import DownloadFormat, DownloadQuality
+        from models.download_enums import AudioQuality, DownloadFormat, DownloadQuality
         from models.video_metadata import VideoMetadata
 
         metadata: VideoMetadata | None = None
@@ -146,6 +164,15 @@ class QueueItemWidget(QFrame):
             playlist_source_url=self._item_data.playlist_source_url,
             is_youtube_mix=self._item_data.is_youtube_mix,
             video_id=self._item_data.video_id,
+            audio_quality=AudioQuality(self._item_data.audio_quality),
+            download_thumbnail=self._item_data.download_thumbnail,
+            write_metadata=self._item_data.write_metadata,
+            write_subtitles=self._item_data.write_subtitles,
+            write_auto_subtitles=self._item_data.write_auto_subtitles,
+            subtitle_languages=self._item_data.subtitle_languages,
+            filename_template=self._item_data.filename_template,
+            create_channel_folder=self._item_data.create_channel_folder,
+            create_playlist_folder=self._item_data.create_playlist_folder,
         )
 
     def is_selected(self) -> bool:
@@ -252,7 +279,11 @@ class QueueItemWidget(QFrame):
         self._url_label.setText(self._item_data.source_url)
         metadata_parts: list[str] = [
             f"Formato: {self._item_data.media_format.upper()}",
-            f"Calidad: {self._item_data.quality}",
+            (
+                f"Calidad audio: {self._item_data.audio_quality} kbps"
+                if self._item_data.media_format == "mp3" and self._item_data.audio_quality != "best"
+                else f"Calidad: {self._item_data.quality}"
+            ),
             f"Estado: {self._item_data.status}",
         ]
         if self._item_data.playlist_index is not None:

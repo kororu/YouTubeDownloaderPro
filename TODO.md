@@ -35,14 +35,17 @@ Convenciones:
 
 ## v0.5.0 - Audio and format improvements
 
-- `[ ]` Añadir MP3, M4A, OPUS, FLAC y WAV.
-- `[ ]` Añadir `Audio original / best audio` cuando sea posible.
-- `[ ]` Añadir calidades original/best, 128, 192, 256 y 320 kbps.
-- `[ ]` Extraer miniatura y metadata.
-- `[ ]` Descargar subtítulos disponibles.
-- `[ ]` Añadir plantillas de nombre de archivo.
-- `[ ]` Crear carpetas opcionales por canal y playlist.
-- `[ ]` Explicar en la UI/documentación que WAV no recupera calidad perdida y ocupa más espacio.
+- `[x]` Añadir MP3, M4A, OPUS, FLAC y WAV.
+- `[x]` Añadir `Audio original / best audio` sin conversión innecesaria.
+- `[x]` Añadir calidades original/best, 128, 192, 256 y 320 kbps para MP3.
+- `[x]` Añadir opciones de miniatura y metadata.
+- `[x]` Añadir subtítulos publicados, automáticos e idiomas configurables.
+- `[x]` Añadir plantillas de nombre predefinidas y personalizadas seguras.
+- `[x]` Crear carpetas opcionales por canal y playlist.
+- `[x]` Mantener compatibilidad con settings y cola JSON antiguos.
+- `[x]` Explicar que WAV no recupera calidad perdida y ocupa más espacio.
+- `[x]` Validar tests, compilación, arranque, build PyInstaller y portable `v0.5.0`.
+- `[ ]` Validar todos los formatos y opciones con descargas reales.
 
 ## v0.6.0 - Visual polish and UX
 

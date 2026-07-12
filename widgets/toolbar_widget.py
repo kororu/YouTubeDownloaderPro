@@ -18,6 +18,16 @@ from PySide6.QtWidgets import (
 
 from models.playlist_range import PlaylistRange
 
+FORMAT_OPTIONS: tuple[tuple[str, str], ...] = (
+    ("MP4", "mp4"),
+    ("MP3", "mp3"),
+    ("M4A", "m4a"),
+    ("OPUS", "opus"),
+    ("FLAC", "flac"),
+    ("WAV", "wav"),
+    ("Audio original", "best_audio"),
+)
+
 
 class ToolbarWidget(QWidget):
     """Toolbar area for URL input and main commands."""
@@ -38,6 +48,7 @@ class ToolbarWidget(QWidget):
         self,
         selected_format: str = "mp4",
         selected_quality: str = "best",
+        selected_audio_quality: str = "best",
         playlist_start_index: int = 1,
         playlist_end_index: int = 0,
         playlist_limit: int = 200,
@@ -58,6 +69,7 @@ class ToolbarWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._initial_format: str = selected_format
         self._initial_quality: str = selected_quality
+        self._initial_audio_quality: str = selected_audio_quality
         self._initial_playlist_start_index: int = playlist_start_index
         self._initial_playlist_end_index: int = playlist_end_index
         self._playlist_limit: int = playlist_limit
@@ -109,17 +121,17 @@ class ToolbarWidget(QWidget):
 
         self._format_combo_box = QComboBox(self)
         self._format_combo_box.setObjectName("formatComboBox")
-        self._format_combo_box.addItems(("MP4", "MP3"))
-        self._format_combo_box.setCurrentText(self._initial_format.upper())
-        self._format_combo_box.setMinimumWidth(110)
+        for label, value in FORMAT_OPTIONS:
+            self._format_combo_box.addItem(label, value)
+        self._set_combo_data(self._format_combo_box, self._initial_format)
+        self._format_combo_box.setMinimumWidth(145)
+        self._format_combo_box.currentIndexChanged.connect(self._populate_quality_combo_box)
 
         self._quality_combo_box = QComboBox(self)
         self._quality_combo_box.setObjectName("qualityComboBox")
-        self._quality_combo_box.addItems(("Best available", "480", "720", "1080", "1440", "2160"))
-        self._quality_combo_box.setCurrentText(
-            "Best available" if self._initial_quality == "best" else self._initial_quality
-        )
         self._quality_combo_box.setMinimumWidth(150)
+        self._populate_quality_combo_box()
+        self._quality_combo_box.currentIndexChanged.connect(self._remember_selected_quality)
 
         self._playlist_start_spin_box = QSpinBox(self)
         self._playlist_start_spin_box.setObjectName("playlistStartSpinBox")
@@ -291,26 +303,75 @@ class ToolbarWidget(QWidget):
 
     def selected_format(self) -> str:
         """Return the selected media format."""
-        return self._format_combo_box.currentText().lower()
+        return str(self._format_combo_box.currentData())
 
     def selected_quality(self) -> str:
         """Return the selected media quality."""
-        quality: str = self._quality_combo_box.currentText()
-        if quality == "Best available":
-            return "best"
-        return quality
+        return str(self._quality_combo_box.currentData())
 
-    def set_download_preferences(self, selected_format: str, selected_quality: str) -> None:
+    def set_download_preferences(
+        self,
+        selected_format: str,
+        selected_quality: str,
+        selected_audio_quality: str,
+    ) -> None:
         """Update selected format and quality controls.
 
         Args:
             selected_format: Selected media format.
             selected_quality: Selected media quality.
         """
-        self._format_combo_box.setCurrentText(selected_format.upper())
-        self._quality_combo_box.setCurrentText(
-            "Best available" if selected_quality == "best" else selected_quality
+        self._initial_quality = selected_quality
+        self._initial_audio_quality = selected_audio_quality
+        self._set_combo_data(self._format_combo_box, selected_format)
+        self._populate_quality_combo_box()
+
+    def _populate_quality_combo_box(self) -> None:
+        """Show video resolutions or audio quality values for the active format."""
+        selected_format: str = self.selected_format()
+        selected_value: str = (
+            self._initial_quality if selected_format == "mp4" else self._initial_audio_quality
         )
+        self._quality_combo_box.blockSignals(True)
+        self._quality_combo_box.clear()
+        if selected_format == "mp4":
+            options: tuple[tuple[str, str], ...] = (
+                ("Best available", "best"),
+                ("480p", "480"),
+                ("720p", "720"),
+                ("1080p", "1080"),
+                ("1440p", "1440"),
+                ("2160p", "2160"),
+            )
+        elif selected_format == "mp3":
+            options = (
+                ("Best / Original", "best"),
+                ("128 kbps", "128"),
+                ("192 kbps", "192"),
+                ("256 kbps", "256"),
+                ("320 kbps", "320"),
+            )
+        else:
+            options = (("Best / Original", "best"),)
+        for label, value in options:
+            self._quality_combo_box.addItem(label, value)
+        self._set_combo_data(self._quality_combo_box, selected_value)
+        self._quality_combo_box.blockSignals(False)
+
+    def _remember_selected_quality(self) -> None:
+        """Remember contextual quality when the user switches output formats."""
+        selected_value: str = self.selected_quality()
+        if self.selected_format() == "mp4":
+            self._initial_quality = selected_value
+        else:
+            self._initial_audio_quality = selected_value
+
+    @staticmethod
+    def _set_combo_data(combo_box: QComboBox, value: str) -> None:
+        """Select a combo item by user data."""
+        index: int = combo_box.findData(value)
+        if index >= 0:
+            combo_box.setCurrentIndex(index)
 
     def set_playlist_preferences(
         self,
