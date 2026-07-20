@@ -59,11 +59,16 @@ Puede cambiar esa carpeta desde Ajustes.
 Estado de esta version
 ----------------------
 
-La version visible es v0.5.0. Antes de distribuir este paquete, se recomienda
+La version visible es v0.9.0 release candidate. Antes de distribuir este paquete, se recomienda
 probar descargas MP4 y MP3, playlists por rangos, YouTube Mix, la opcion
 "Cargar siguientes" y la ausencia de ventanas emergentes de yt-dlp/ffmpeg.
 Tambien se deben probar MP3, M4A, OPUS, FLAC, WAV, audio original,
 miniaturas, metadata, subtitulos y plantillas de nombre.
+
+Si una playlist es muy grande, cargue rangos pequeños (por ejemplo 1-200) y
+use "Cargar siguientes". Si una descarga falla, revise el Registro y el
+Diagnóstico de la aplicación; los archivos de configuración y logs se guardan
+en el perfil de usuario de Windows, no dentro de esta carpeta portable.
 
 Uso responsable
 ---------------

@@ -82,6 +82,9 @@ Convenciones:
 
 ## v0.9.0 - Installer and release candidate
 
+- `[x]` Preparar build onedir, portable limpio y documentación de instalación.
+- `[x]` Añadir checklist de validación para release candidate.
+
 - `[ ]` Decidir si se publicará un instalador real para Windows.
 - `[ ]` Preparar ZIP portable final, accesos directos e icono definitivo.
 - `[ ]` Verificar metadata de versión.

@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.9.0 - 2026-07-20
+
+- Preparado build onedir, portable limpio, documentación de usuario y checklist de release candidate.
+
 ## v0.7.0 - 2026-07-20
 
 - Añadido historial JSON local de descargas completadas y fallidas, con búsqueda, copiado, apertura de carpeta y reintento.

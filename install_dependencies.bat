@@ -30,6 +30,7 @@ if errorlevel 1 (
     echo yt-dlp: missing
 ) else (
     echo yt-dlp: detected
+    yt-dlp --version
 )
 
 where ffmpeg >nul 2>nul
@@ -38,6 +39,7 @@ if errorlevel 1 (
     echo FFmpeg: missing
 ) else (
     echo FFmpeg: detected
+    ffmpeg -version 2^>nul | findstr /B /C:"ffmpeg version"
 )
 
 if "%NEEDS_YTDLP%"=="0" if "%NEEDS_FFMPEG%"=="0" (
@@ -107,5 +109,6 @@ if defined VERIFY_FAILED (
 )
 
 echo Dependencies are ready. Restart YouTube Downloader Pro before downloading.
+echo If a new terminal was required, open YouTube Downloader Pro after PATH refreshes.
 pause
 exit /b 0

@@ -15,6 +15,7 @@ $PortableAppDirectory = Join-Path $PortableRoot "YouTubeDownloaderPro"
 $InstallScript = Join-Path $ProjectRoot "install_dependencies.bat"
 $RunScript = Join-Path $ProjectRoot "run_app.bat"
 $InstallReadme = Join-Path $ProjectRoot "README_INSTALL.txt"
+$ReleaseNotes = Join-Path $ProjectRoot "RELEASE.md"
 $ConstantsFile = Join-Path $ProjectRoot "core\constants.py"
 
 function Assert-FileExists {
@@ -60,6 +61,7 @@ Assert-FileExists -Path $BuildScript -Description "Windows build script"
 Assert-FileExists -Path $InstallScript -Description "Dependency installer"
 Assert-FileExists -Path $RunScript -Description "Application launcher"
 Assert-FileExists -Path $InstallReadme -Description "Portable install README"
+Assert-FileExists -Path $ReleaseNotes -Description "Release notes"
 
 if (-not $SkipBuild) {
     $BuildArguments = @("-ExecutionPolicy", "Bypass", "-File", $BuildScript)
@@ -86,6 +88,7 @@ Copy-Item -LiteralPath $DistAppDirectory -Destination $PortableAppDirectory -Rec
 Copy-Item -LiteralPath $InstallScript -Destination (Join-Path $PortableRoot "install_dependencies.bat") -Force
 Copy-Item -LiteralPath $RunScript -Destination (Join-Path $PortableRoot "run_app.bat") -Force
 Copy-Item -LiteralPath $InstallReadme -Destination (Join-Path $PortableRoot "README_INSTALL.txt") -Force
+Copy-Item -LiteralPath $ReleaseNotes -Destination (Join-Path $PortableRoot "RELEASE.md") -Force
 
 $ExcludedDirectoryNames = @(".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "tests", "logs", "downloads")
 Get-ChildItem -LiteralPath $PortableRoot -Directory -Recurse -Force |
@@ -115,5 +118,6 @@ Assert-FileExists -Path (Join-Path $PortableRoot "install_dependencies.bat") -De
 Assert-FileExists -Path (Join-Path $PortableRoot "run_app.bat") -Description "Portable launcher"
 Assert-FileExists -Path (Join-Path $PortableRoot "README_INSTALL.txt") -Description "Portable install README"
 Assert-FileExists -Path (Join-Path $PortableRoot "VERSION.txt") -Description "Portable version file"
+Assert-FileExists -Path (Join-Path $PortableRoot "RELEASE.md") -Description "Portable release notes"
 
 Write-Host "Portable package completed: $PortableRoot"
