@@ -4,7 +4,7 @@
 
 - Proyecto: YouTube Downloader Pro.
 - Autor: Ariel Ponce.
-- Versión visible actual: `v0.6.0`.
+- Versión visible actual: `v0.7.0`.
 - Plataforma objetivo: Windows.
 - Stack: Python 3.12+, PySide6, QThread, `subprocess`, `yt-dlp`, `ffmpeg`, JSON, QSS y PyInstaller.
 - Distribución: ejecutable PyInstaller `onedir` y paquete portable.
@@ -32,7 +32,7 @@
 - Scripts `scripts\build_windows.ps1` y `scripts\package_portable.ps1`.
 - Launcher `run_app.bat` y guía `README_INSTALL.txt` para el portable.
 
-## En progreso en v0.6.0
+## En progreso en v0.7.0
 
 Las siguientes mejoras están implementadas en el working tree, pero siguen pendientes de validación manual completa y de su proceso normal de commit/release:
 
@@ -51,6 +51,7 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 - Toolbar organizada en grupos, controles dark legibles y desplegables con contraste consistente.
 - Fondo cover adaptable con opacidad persistente, paneles semitransparentes y modo compacto.
 - Estados vacíos, tooltips, atajos básicos, contadores de cola y acciones de copiar/limpiar registro.
+- Historial de descargas JSON, diálogo de consulta y control de duplicados/redescargas.
 
 ## Pendiente de verificación
 

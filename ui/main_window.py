@@ -15,13 +15,16 @@ from config.settings import Settings
 from config.settings_manager import SettingsManager
 from core.dependency_checker import DependencyChecker, DependencyCheckResult
 from dialogs.about_dialog import AboutDialog
+from dialogs.history_dialog import HistoryDialog
 from models.download_enums import AudioQuality, DownloadFormat, DownloadQuality, DownloadStatus
 from models.download_item import DownloadItem
+from models.download_history_item import DownloadHistoryItem
 from models.download_progress import DownloadProgress
 from models.playlist_metadata import PlaylistVideo
 from models.playlist_range import PlaylistRange
 from models.video_metadata import VideoMetadata
 from services.download_queue_service import DownloadQueueService
+from services.download_history_service import DownloadHistoryService
 from services.metadata_worker import MetadataWorker
 from services.playlist_range_history_service import PlaylistRangeHistoryService
 from services.playlist_worker import PlaylistWorker
@@ -99,6 +102,7 @@ class MainWindow(QMainWindow):
         )
         self._queue_persistence_service: QueuePersistenceService = QueuePersistenceService()
         self._playlist_range_history_service: PlaylistRangeHistoryService = PlaylistRangeHistoryService()
+        self._download_history_service: DownloadHistoryService = DownloadHistoryService()
         self._toolbar_widget: ToolbarWidget
         self._queue_widget: QueueWidget
         self._log_widget: LogWidget
@@ -191,6 +195,10 @@ class MainWindow(QMainWindow):
         about_action.setShortcut("F1")
         about_action.triggered.connect(self._show_about_dialog)
         self.menuBar().addMenu("Ayuda").addAction(about_action)
+
+        history_action: QAction = QAction("Historial de descargas", self)
+        history_action.triggered.connect(self._show_history_dialog)
+        self.menuBar().addMenu("Historial").addAction(history_action)
 
     def _build_layout(self) -> None:
         """Build the main window layout."""
@@ -289,6 +297,16 @@ class MainWindow(QMainWindow):
         )
         if download_item is None:
             return
+
+        if self._settings.prevent_queue_duplicates and download_item.duplicate_key() in self._queue_duplicate_keys():
+            self._show_input_error("Este video ya está en la cola.")
+            return
+        if self._download_history_service.is_completed(download_item.duplicate_key()):
+            if self._settings.warn_already_downloaded:
+                self._log_widget.append_warning("Este video ya fue descargado anteriormente.")
+            if not self._settings.allow_redownload_completed:
+                self._status_widget.set_status_message("video ya descargado")
+                return
 
         self._queue_widget.add_download_item(download_item)
         self._download_queue_service.add_items((download_item,))
@@ -699,6 +717,9 @@ class MainWindow(QMainWindow):
             return
         self._queue_widget.update_download_item(item)
         self._persist_queue()
+        if item.status in {DownloadStatus.COMPLETED, DownloadStatus.FAILED}:
+            history_item = DownloadHistoryItem.from_download_item(item, self._settings.output_folder)
+            self._download_history_service.record(history_item)
         if item.status is DownloadStatus.FAILED and item.error_message:
             self._log_widget.append_error(self._friendly_error_message(item.error_message))
 
@@ -849,6 +870,18 @@ class MainWindow(QMainWindow):
         """Open the about dialog."""
         dialog: AboutDialog = AboutDialog(self)
         dialog.exec()
+
+    def _show_history_dialog(self) -> None:
+        """Open the searchable local download history."""
+        dialog = HistoryDialog(self._download_history_service.load(), self)
+        dialog.retry_requested.connect(self._retry_history_item)
+        dialog.exec()
+
+    def _retry_history_item(self, history_item: object) -> None:
+        """Add a history entry back to the queue using its stored URL."""
+        if not isinstance(history_item, DownloadHistoryItem):
+            return
+        self._add_video_to_queue(history_item.source_url, "mp4" if history_item.output_format == "video" else (history_item.audio_format or "mp3"), history_item.quality)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Persist window geometry before closing.

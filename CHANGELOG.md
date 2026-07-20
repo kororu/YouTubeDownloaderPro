@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.7.0 - 2026-07-20
+
+- Añadido historial JSON local de descargas completadas y fallidas, con búsqueda, copiado, apertura de carpeta y reintento.
+- Añadidos ajustes persistentes para duplicados en cola, avisos de descargados y redescarga.
+
 ## v0.6.0 - 2026-07-20
 
 - Reorganizada la toolbar en grupos visuales y reforzada la legibilidad de controles y desplegables dark.

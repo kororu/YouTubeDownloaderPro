@@ -2,7 +2,7 @@
 
 YouTube Downloader Pro es un frontend de escritorio para `yt-dlp` y `ffmpeg`. Su objetivo es ofrecer una experiencia Windows profesional, modular y distribuible mediante PyInstaller, sin ocultar que la compatibilidad con fuentes externas depende de las herramientas y sitios subyacentes.
 
-Versión visible actual: `v0.6.0`.
+Versión visible actual: `v0.7.0`.
 
 ## Arquitectura
 

@@ -59,6 +59,9 @@ Convenciones:
 
 ## v0.7.0 - Download history and duplicate control
 
+- `[x]` Historial JSON persistente, búsqueda, acciones y reintento desde historial.
+- `[x]` Aviso de videos ya descargados y ajustes de duplicados/redescarga.
+
 - `[ ]` Crear historial completo y buscable.
 - `[ ]` Evitar descargas duplicadas mediante historial.
 - `[ ]` Abrir carpeta y copiar ruta del archivo.

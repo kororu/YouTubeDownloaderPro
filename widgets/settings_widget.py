@@ -65,6 +65,9 @@ class SettingsWidget(QWidget):
         self._background_opacity_slider.setValue(round(settings.background_opacity * 100))
         self._background_opacity_slider.setEnabled(bool(settings.background_image_path))
         self._compact_mode_checkbox.setChecked(settings.compact_mode)
+        self._prevent_queue_duplicates_checkbox.setChecked(settings.prevent_queue_duplicates)
+        self._warn_already_downloaded_checkbox.setChecked(settings.warn_already_downloaded)
+        self._allow_redownload_checkbox.setChecked(settings.allow_redownload_completed)
         self._set_combo_data(self._format_combo_box, settings.selected_format)
         self._set_combo_data(self._video_quality_combo_box, settings.selected_quality)
         self._set_combo_data(self._audio_quality_combo_box, settings.selected_audio_quality)
@@ -123,6 +126,9 @@ class SettingsWidget(QWidget):
         self._background_opacity_slider.setToolTip("Controla cuánto se ve la imagen sin perder legibilidad.")
         self._compact_mode_checkbox = QCheckBox("Modo compacto", content)
         self._compact_mode_checkbox.setToolTip("Reduce el espaciado de la interfaz y de la cola.")
+        self._prevent_queue_duplicates_checkbox = QCheckBox("Evitar duplicados en cola", content)
+        self._warn_already_downloaded_checkbox = QCheckBox("Avisar si ya fue descargado", content)
+        self._allow_redownload_checkbox = QCheckBox("Permitir redescargar completados", content)
 
         self._format_combo_box = QComboBox(content)
         for label, value in FORMAT_OPTIONS:
@@ -192,6 +198,9 @@ class SettingsWidget(QWidget):
         form_layout.addRow("Fondo", background_layout)
         form_layout.addRow("Opacidad fondo", self._background_opacity_slider)
         form_layout.addRow("Interfaz", self._compact_mode_checkbox)
+        form_layout.addRow("Historial", self._prevent_queue_duplicates_checkbox)
+        form_layout.addRow("", self._warn_already_downloaded_checkbox)
+        form_layout.addRow("", self._allow_redownload_checkbox)
         form_layout.addRow("Formato", self._format_combo_box)
         form_layout.addRow("Calidad video", self._video_quality_combo_box)
         form_layout.addRow("Calidad MP3", self._audio_quality_combo_box)
@@ -267,6 +276,9 @@ class SettingsWidget(QWidget):
             background_image_path=self._background_image_input.text().strip(),
             background_opacity=self._background_opacity_slider.value() / 100,
             compact_mode=self._compact_mode_checkbox.isChecked(),
+            prevent_queue_duplicates=self._prevent_queue_duplicates_checkbox.isChecked(),
+            warn_already_downloaded=self._warn_already_downloaded_checkbox.isChecked(),
+            allow_redownload_completed=self._allow_redownload_checkbox.isChecked(),
             download_thumbnail=self._download_thumbnail_checkbox.isChecked(),
             write_metadata=self._write_metadata_checkbox.isChecked(),
             write_subtitles=self._write_subtitles_checkbox.isChecked(),

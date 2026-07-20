@@ -46,6 +46,9 @@ class Settings:
     background_image_path: str
     background_opacity: float
     compact_mode: bool
+    prevent_queue_duplicates: bool
+    warn_already_downloaded: bool
+    allow_redownload_completed: bool
     download_thumbnail: bool
     write_metadata: bool
     write_subtitles: bool
@@ -79,6 +82,9 @@ class Settings:
             background_image_path="",
             background_opacity=0.28,
             compact_mode=False,
+            prevent_queue_duplicates=True,
+            warn_already_downloaded=True,
+            allow_redownload_completed=False,
             download_thumbnail=False,
             write_metadata=False,
             write_subtitles=False,
@@ -139,6 +145,9 @@ class Settings:
             background_image_path=_read_background_image_path(data, defaults.background_image_path),
             background_opacity=_read_float(data, "background_opacity", defaults.background_opacity, 0.10, 0.55),
             compact_mode=_read_bool(data, "compact_mode", defaults.compact_mode),
+            prevent_queue_duplicates=_read_bool(data, "prevent_queue_duplicates", defaults.prevent_queue_duplicates),
+            warn_already_downloaded=_read_bool(data, "warn_already_downloaded", defaults.warn_already_downloaded),
+            allow_redownload_completed=_read_bool(data, "allow_redownload_completed", defaults.allow_redownload_completed),
             download_thumbnail=_read_bool(data, "download_thumbnail", defaults.download_thumbnail),
             write_metadata=_read_bool(data, "write_metadata", defaults.write_metadata),
             write_subtitles=_read_bool(data, "write_subtitles", defaults.write_subtitles),
@@ -216,6 +225,9 @@ class Settings:
         background_image_path: str,
         background_opacity: float,
         compact_mode: bool,
+        prevent_queue_duplicates: bool,
+        warn_already_downloaded: bool,
+        allow_redownload_completed: bool,
         download_thumbnail: bool,
         write_metadata: bool,
         write_subtitles: bool,
@@ -268,6 +280,9 @@ class Settings:
             background_image_path=normalized_background_image_path,
             background_opacity=max(0.10, min(0.55, background_opacity)),
             compact_mode=compact_mode,
+            prevent_queue_duplicates=prevent_queue_duplicates,
+            warn_already_downloaded=warn_already_downloaded,
+            allow_redownload_completed=allow_redownload_completed,
             download_thumbnail=download_thumbnail,
             write_metadata=write_metadata,
             write_subtitles=write_subtitles,

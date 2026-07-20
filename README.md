@@ -2,7 +2,7 @@
 
 YouTube Downloader Pro es una aplicación de escritorio para Windows creada con Python 3.12+, PySide6 y PyInstaller. Actúa como interfaz gráfica para `yt-dlp` y `ffmpeg`, con cola de descargas, ajustes persistentes, logs y soporte para videos, playlists y YouTube Mix.
 
-Versión visible actual: `v0.6.0`.
+Versión visible actual: `v0.7.0`.
 
 ## Estado actual
 
@@ -105,7 +105,7 @@ El paquete portable se prepara en `release\YouTubeDownloaderPro_Portable\`. Cons
 - `v0.3.0`: descargas silenciosas, rangos de playlist, `Cargar siguientes`, deduplicación y mejoras para YouTube Mix.
 - `v0.4.0`: gestión avanzada de cola y playlists, pausa, reintentos, prioridades, historial básico e importación/exportación.
 - `v0.5.0`: audio avanzado, best audio, metadata, miniaturas, subtítulos, plantillas y carpetas organizadas.
-- `v0.6.0` (actual): toolbar en grupos, controles dark legibles, fondo adaptable con opacidad, modo compacto, estados vacíos, tooltips, atajos y registro mejorado.
+- `v0.7.0` (actual): historial local de descargas, aviso de videos ya descargados y control de redescargas.
 
 Atajos principales: `Ctrl+L` enfoca la URL, `Ctrl+D` descarga la selección, `Ctrl+Shift+C` cancela todo, `Ctrl+O` abre la carpeta de salida, `Ctrl+,` muestra ajustes, `F1` abre Acerca de y, con la cola enfocada, `Ctrl+A`/`Delete` selecciona o quita elementos.
 - `v0.7.0`: historial completo y control de duplicados.
