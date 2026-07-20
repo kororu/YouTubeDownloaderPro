@@ -3,7 +3,7 @@
 ## Estado de versión
 
 - Producto: YouTube Downloader Pro.
-- Versión visible actual: `1.0.4`.
+- Versión visible actual: `1.1.0`.
 - Plataforma: Windows.
 - Formato: ejecutable PyInstaller `onedir` y paquete portable.
 - Estado: mejoras de `v0.6.0` presentes en el working tree; release pendiente de validación manual completa.
@@ -77,9 +77,9 @@ El 2026-07-12 se completaron correctamente 35 pruebas con `unittest`, `compileal
 
 ## Alcance futuro
 
-La aplicación se mantiene en estabilización `v1.0.x`. La próxima mejora mayor aprobada es `v1.1.0 - Simple mode and compact queue`, pero no se debe implementar hasta crear un commit estable y completar las pruebas manuales actuales.
+La aplicación incluye `v1.1.0 - Simple mode and compact queue` en el working tree y requiere sus pruebas manuales antes de crear una release.
 
-El Modo Simple previsto priorizará URL, MP4/MP3, mejor calidad automática, carpeta de destino, acciones principales y una cola minimalista. El Modo Avanzado conservará los controles técnicos y de playlist existentes. Esta planificación no cambia la versión ni el alcance de la release actual.
+El Modo Simple prioriza URL, MP4/MP3, mejor calidad automática, carpeta de destino, acciones principales y una cola minimalista. El Modo Avanzado conserva los controles técnicos y de playlist existentes.
 
 El roadmap hacia `v1.0.0` está en `PROJECT.md` y `TODO.md`. Formatos como WAV, historial completo, configuración avanzada y fuentes adicionales son planificados o sugeridos; no forman parte de la funcionalidad estable actual.
 

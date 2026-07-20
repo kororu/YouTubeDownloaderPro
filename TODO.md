@@ -111,18 +111,16 @@ Convenciones:
 ### v1.0.x - Stability and bugfixes
 
 - `[~]` Consolidar historial, redescarga, archivo movido/no encontrado, progreso, cookies, portable y defectos visuales menores.
-- `[ ]` Crear un commit estable y completar pruebas manuales antes de iniciar `v1.1.0`.
+- `[ ]` Completar pruebas manuales de `v1.1.0` antes de su release.
 
 ### v1.1.0 - Simple mode and compact queue
 
-> **No implementar todavía.** Mejora aprobada para después de estabilizar y commitear el estado `v1.0.x`.
-
-- `[ ]` Crear Modo Simple y conservar Modo Avanzado.
-- `[ ]` Mostrar URL, MP4/MP3, mejor calidad automática, carpeta destino y acciones principales de cola.
-- `[ ]` Ocultar calidad manual, rangos, opciones técnicas, cookies avanzadas, diagnóstico, log grande y archivos auxiliares.
-- `[ ]` Implementar cola minimalista: selección, nombre, formato, estado, porcentaje, barra compacta y quitar.
-- `[ ]` Usar textos no técnicos: “Mejor calidad automática”, “YouTube requiere verificación”, “Usar sesión del navegador” y “Ubicación del archivo”.
-- `[ ]` Mantener la vista avanzada para control por rango, historial, diagnósticos, formatos adicionales y configuraciones especiales.
+- `[x]` Crear Modo Simple y conservar Modo Avanzado.
+- `[x]` Mostrar URL, MP4/MP3, mejor calidad automática, carpeta destino y acciones principales de cola.
+- `[x]` Ocultar calidad manual, rangos, opciones técnicas, cookies avanzadas, diagnóstico, log grande y archivos auxiliares.
+- `[x]` Implementar cola minimalista: selección, nombre, formato, estado, porcentaje, barra compacta y quitar.
+- `[x]` Mantener la vista avanzada para control por rango, historial, diagnósticos, formatos adicionales y configuraciones especiales.
+- `[ ]` Ejecutar pruebas manuales de cambio de modo durante descargas y playlist.
 
 ### v1.2.0 - Advanced playlist queue view
 

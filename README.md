@@ -2,7 +2,7 @@
 
 YouTube Downloader Pro es una aplicación de escritorio para Windows creada con Python 3.12+, PySide6 y PyInstaller. Actúa como interfaz gráfica para `yt-dlp` y `ffmpeg`, con cola de descargas, ajustes persistentes, logs y soporte para videos, playlists y YouTube Mix.
 
-Versión visible actual: `v1.0.4`.
+Versión visible actual: `v1.1.0`.
 
 En Windows, Chromium puede bloquear `--cookies-from-browser`. Si ocurre, exporte su propio `cookies.txt` y úselo como alternativa local; no lo incluya en Git ni en el portable.
 
@@ -122,15 +122,11 @@ El alcance detallado está en [PROJECT.md](PROJECT.md) y [TODO.md](TODO.md).
 
 WAV está disponible mediante `yt-dlp` y FFmpeg desde `v0.5.0`. Produce archivos grandes y no recupera calidad perdida cuando la fuente original ya está comprimida. Solo evita una compresión adicional y resulta útil para edición. Para uso cotidiano, MP3, M4A u OPUS suelen ofrecer una mejor relación entre calidad y tamaño; para máxima calidad práctica se recomienda conservar `best audio` o elegir FLAC/WAV según la necesidad.
 
-## Próximo backlog aprobado
-
-La aplicación permanece en estabilización `v1.0.x`. Antes de una mejora mayor se debe crear un commit estable y completar las pruebas manuales pendientes.
-
 ### v1.1.0 - Simple mode and compact queue
 
-**Planificado; no implementado.** Incorporará un Modo Simple para pegar una URL, elegir MP4 o MP3, usar la mejor calidad automática, cambiar carpeta, gestionar una cola minimalista y ver progreso. El Modo Avanzado conservará las opciones actuales para usuarios técnicos.
+Implementado en el working tree. El selector visible inicia en **Modo Simple** y conserva la elección entre sesiones. Permite pegar una URL, elegir MP4 o MP3 con mejor calidad automática, cambiar carpeta y gestionar la cola compacta. El Modo Avanzado conserva las opciones actuales para usuarios técnicos.
 
-La lista simple mostrará selección, nombre, formato, estado, porcentaje, barra compacta y quitar. Ocultará rangos, calidad manual, opciones técnicas, cookies avanzadas, diagnóstico, metadata, subtítulos, miniaturas y plantillas.
+La lista simple muestra selección, nombre, formato, estado, porcentaje, barra compacta y quitar. Oculta rangos, calidad manual, opciones técnicas, cookies avanzadas, diagnóstico, metadata, subtítulos, miniaturas y plantillas.
 
 ### Orden recomendado
 

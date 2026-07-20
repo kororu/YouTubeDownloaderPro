@@ -20,6 +20,7 @@ class Settings:
         background_image_path: Optional custom application background image path.
         background_opacity: Image visibility behind the dark readability overlay.
         compact_mode: Whether the interface uses reduced visual spacing.
+        ui_mode: Visible interface mode, either simple or advanced.
         download_thumbnail: Whether downloads include a thumbnail file.
         write_metadata: Whether downloads include an info JSON file.
         write_subtitles: Whether published subtitles are requested.
@@ -46,6 +47,7 @@ class Settings:
     background_image_path: str
     background_opacity: float
     compact_mode: bool
+    ui_mode: str
     queue_view_mode: str
     prevent_queue_duplicates: bool
     warn_already_downloaded: bool
@@ -97,6 +99,7 @@ class Settings:
             background_image_path="",
             background_opacity=0.28,
             compact_mode=False,
+            ui_mode="simple",
             queue_view_mode="cards",
             prevent_queue_duplicates=True,
             warn_already_downloaded=True,
@@ -164,6 +167,7 @@ class Settings:
             background_image_path=_read_background_image_path(data, defaults.background_image_path),
             background_opacity=_read_float(data, "background_opacity", defaults.background_opacity, 0.10, 0.55),
             compact_mode=_read_bool(data, "compact_mode", defaults.compact_mode),
+            ui_mode=_read_choice(data, "ui_mode", defaults.ui_mode, ("simple", "advanced")),
             queue_view_mode=_read_choice(data, "queue_view_mode", defaults.queue_view_mode, ("cards", "list")),
             prevent_queue_duplicates=_read_bool(data, "prevent_queue_duplicates", defaults.prevent_queue_duplicates),
             warn_already_downloaded=_read_bool(data, "warn_already_downloaded", defaults.warn_already_downloaded),
@@ -252,6 +256,17 @@ class Settings:
             Updated settings instance.
         """
         return replace(self, queue_view_mode=_normalize_choice(queue_view_mode, "cards", ("cards", "list")))
+
+    def with_ui_mode(self, ui_mode: str) -> Self:
+        """Create settings with a validated interface mode.
+
+        Args:
+            ui_mode: Requested interface mode.
+
+        Returns:
+            Updated settings instance.
+        """
+        return replace(self, ui_mode=_normalize_choice(ui_mode, "simple", ("simple", "advanced")))
 
     def with_preferences(
         self,

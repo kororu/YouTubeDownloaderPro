@@ -88,6 +88,12 @@ class SettingsTestCase(unittest.TestCase):
         self.assertEqual(Settings.from_dict({"queue_view_mode": "list"}).queue_view_mode, "list")
         self.assertEqual(Settings.from_dict({"queue_view_mode": "table"}).queue_view_mode, "cards")
 
+    def test_ui_mode_defaults_to_simple_and_validates_legacy_values(self) -> None:
+        """The focused interface is safe for legacy settings files."""
+        self.assertEqual(Settings.from_dict({}).ui_mode, "simple")
+        self.assertEqual(Settings.from_dict({"ui_mode": "advanced"}).ui_mode, "advanced")
+        self.assertEqual(Settings.from_dict({"ui_mode": "expert"}).ui_mode, "simple")
+
 
 if __name__ == "__main__":
     unittest.main()

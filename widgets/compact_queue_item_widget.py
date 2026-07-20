@@ -30,6 +30,7 @@ class CompactQueueItemWidget(QFrame):
         self._status_label: QLabel
         self._progress_bar: QProgressBar
         self._percentage_label: QLabel
+        self._simple_mode: bool = False
         self.setObjectName("compactQueueItemWidget")
         self._build_layout()
 
@@ -45,6 +46,16 @@ class CompactQueueItemWidget(QFrame):
     def update_item(self, item_data: QueueItemData) -> None:
         """Update row contents from the shared queue data."""
         self._item_data = item_data
+        self._refresh()
+
+    def set_simple_mode(self, simple_mode: bool) -> None:
+        """Use friendly compact status labels in simple mode.
+
+        Args:
+            simple_mode: Whether the simple interface is active.
+        """
+        self._simple_mode = simple_mode
+        self._quality_label.setVisible(not simple_mode)
         self._refresh()
 
     def _build_layout(self) -> None:
@@ -99,8 +110,8 @@ class CompactQueueItemWidget(QFrame):
         self._title_label.setToolTip(self._item_data.source_url)
         self._format_label.setText(self._item_data.media_format.upper())
         self._quality_label.setText(self._item_data.quality)
-        self._status_label.setText(self._item_data.status)
-        self._status_label.setToolTip(self._item_data.error_message or self._item_data.status)
+        self._status_label.setText(self._display_status())
+        self._status_label.setToolTip(self._status_tooltip())
         percentage = 100 if self._item_data.status == "Ya descargado" else round(self._item_data.progress_percentage)
         if self._item_data.status == "Cargando metadatos":
             self._progress_bar.setRange(0, 0)
@@ -112,6 +123,31 @@ class CompactQueueItemWidget(QFrame):
         self._progress_bar.setProperty("downloadState", self._item_data.status)
         self._progress_bar.style().unpolish(self._progress_bar)
         self._progress_bar.style().polish(self._progress_bar)
+
+    def _display_status(self) -> str:
+        """Return a concise user-facing status for the active display mode."""
+        if not self._simple_mode:
+            return self._item_data.status
+        simple_statuses = {
+            "Cargando metadatos": "Cargando información",
+            "Pendiente": "En espera",
+            "Listo": "En espera",
+            "En cola": "En espera",
+            "Descargando": "Descargando",
+            "Ya descargado": "Ya descargado",
+            "Cancelado": "Cancelado",
+            "Error": "Error",
+        }
+        return simple_statuses.get(self._item_data.status, self._item_data.status)
+
+    def _status_tooltip(self) -> str:
+        """Avoid exposing technical worker errors in simple mode."""
+        if not self._simple_mode or not self._item_data.error_message:
+            return self._item_data.error_message or self._item_data.status
+        error_message = self._item_data.error_message.lower()
+        if "not a bot" in error_message or "cookies" in error_message or "authentication" in error_message:
+            return "YouTube requiere verificación. Usa sesión del navegador desde Modo Avanzado."
+        return "No se pudo completar la descarga. Verifica la URL o inténtalo nuevamente."
 
     def _emit_selection_changed(self, selected: bool) -> None:
         """Emit selection updates for synchronization with the card renderer."""

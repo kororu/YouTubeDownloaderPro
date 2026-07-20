@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.0 - Simple mode and compact queue
+
+- Añadido selector persistente de Modo Simple y Modo Avanzado; el modo inicial es Simple.
+- Añadido flujo simple con URL, MP4/MP3, mejor calidad automática, destino visible y acciones esenciales de cola.
+- Reutilizada la misma cola y servicios de descarga para que cambiar de modo no reinicie elementos ni descargas activas.
+
 ## v1.0.4 - Dual queue view
 
 - Añadida una vista de lista compacta para seleccionar y gestionar playlists o colas grandes.
@@ -48,7 +54,7 @@ Todos los cambios relevantes del proyecto se documentan en este archivo.
 
 ### Documentación
 
-- Aprobado el backlog futuro `v1.1.0 - Simple mode and compact queue`; es una propuesta de UX y no está implementada.
+- Implementado `v1.1.0 - Simple mode and compact queue` en el working tree; requiere las pruebas manuales normales antes de una release.
 - Reordenado el roadmap posterior a `v1.0.x`: modo simple primero, luego cola avanzada de playlists, flujo de playlists, perfiles, fuentes múltiples y automatización.
 
 - Documentado el estado real de `v0.3.0`, incluidas las mejoras presentes en el working tree y sus validaciones pendientes.

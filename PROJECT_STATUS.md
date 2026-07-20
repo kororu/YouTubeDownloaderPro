@@ -4,7 +4,7 @@
 
 - Proyecto: YouTube Downloader Pro.
 - Autor: Ariel Ponce.
-- Versión visible actual: `v1.0.4`.
+- Versión visible actual: `v1.1.0`.
 - Plataforma objetivo: Windows.
 - Stack: Python 3.12+, PySide6, QThread, `subprocess`, `yt-dlp`, `ffmpeg`, JSON, QSS y PyInstaller.
 - Distribución: ejecutable PyInstaller `onedir` y paquete portable.
@@ -69,6 +69,15 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 - Probar el paquete portable generado en otro PC Windows sin VS Code.
 - Mejorar, si las pruebas lo requieren, el contenido y robustez del empaquetado portable.
 
+## Implementado en el working tree
+
+### v1.1.0 - Simple mode and compact queue
+
+- Selector persistente visible para Modo Simple y Modo Avanzado; inicia en Simple.
+- Modo Simple: URL, MP4/MP3, mejor calidad automática, carpeta visible, acciones esenciales y cola compacta.
+- El cambio de modo conserva la misma cola, selección, progreso y descargas en curso.
+- Modo Avanzado conserva controles de playlist, formatos, rango, historial, diagnóstico y ajustes.
+
 ## Planificado
 
 ### v1.0.x - Stability and bugfixes
@@ -78,7 +87,7 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 
 ### v1.1.0 - Simple mode and compact queue
 
-**Backlog aprobado; no implementar todavía.** Será la próxima mejora mayor recomendada después de estabilizar `v1.0.x`.
+Implementado en el working tree; pendiente de pruebas manuales y release normal.
 
 - Modo Simple con URL, MP4/MP3, mejor calidad automática, carpeta visible y acciones principales.
 - Cola minimalista con selección, nombre, formato, estado, porcentaje, barra de progreso y quitar.

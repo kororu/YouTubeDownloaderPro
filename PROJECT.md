@@ -166,7 +166,7 @@ Consolidar historial, redescargas cuando el archivo no existe, archivo movido/no
 
 ### v1.1.0 - Simple mode and compact queue
 
-**Backlog aprobado; no implementar todavía.** Crear un Modo Simple para personas no técnicas y mantener el Modo Avanzado actual.
+Implementado en el working tree: un selector persistente inicia en Modo Simple y permite recuperar el Modo Avanzado actual sin modificar la cola ni las descargas.
 
 - Modo Simple: URL, MP4/MP3, mejor calidad automática, carpeta de destino, acciones de agregar/descargar/quitar y cola minimalista con estado y progreso.
 - Ocultar calidad manual, rangos, cookies avanzadas, diagnóstico, log grande, metadata, subtítulos, miniaturas y plantillas.

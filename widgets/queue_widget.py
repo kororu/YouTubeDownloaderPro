@@ -45,12 +45,15 @@ class QueueWidget(QWidget):
         self._search_text: str = ""
         self._sort_mode: str = "Orden de ingreso"
         self._compact_mode: bool = False
+        self._simple_mode: bool = False
         self._view_mode: str = "cards"
         self._list_container: QWidget = QWidget(self)
         self._list_layout: QVBoxLayout = QVBoxLayout(self._list_container)
         self._view_stack: QStackedWidget
         self._cards_view_button: QPushButton
         self._list_view_button: QPushButton
+        self._list_quality_header: QLabel
+        self._queue_header_action_buttons: tuple[QPushButton, ...]
         self._build_layout()
 
     def add_download_item(self, download_item: DownloadItem) -> None:
@@ -102,6 +105,7 @@ class QueueWidget(QWidget):
         )
         compact_item.selection_changed.connect(self._sync_compact_selection)
         compact_item.remove_requested.connect(self.remove_item)
+        compact_item.set_simple_mode(self._simple_mode)
         self._compact_items[item_widget.item_id] = compact_item
         self._list_layout.insertWidget(max(1, self._list_layout.count() - 1), compact_item)
 
@@ -248,6 +252,21 @@ class QueueWidget(QWidget):
         for item_widget in self._items:
             item_widget.set_compact_mode(compact_mode)
 
+    def set_simple_mode(self, simple_mode: bool) -> None:
+        """Adjust queue chrome for the focused simple interface.
+
+        Args:
+            simple_mode: Whether the simple interface is active.
+        """
+        self._simple_mode = simple_mode
+        self._cards_view_button.setVisible(not simple_mode)
+        self._list_view_button.setVisible(not simple_mode)
+        self._list_quality_header.setVisible(not simple_mode)
+        for button in self._queue_header_action_buttons:
+            button.setVisible(not simple_mode)
+        for compact_item in self._compact_items.values():
+            compact_item.set_simple_mode(simple_mode)
+
     def set_view_mode(self, view_mode: str) -> None:
         """Switch immediately between card and compact list renderers."""
         self._view_mode = "list" if view_mode == "list" else "cards"
@@ -300,6 +319,11 @@ class QueueWidget(QWidget):
         header_layout.addWidget(select_all_button)
         header_layout.addWidget(deselect_all_button)
         header_layout.addWidget(remove_selected_button)
+        self._queue_header_action_buttons = (
+            select_all_button,
+            deselect_all_button,
+            remove_selected_button,
+        )
 
         cards_scroll_area: QScrollArea = self._create_scroll_area(self._items_container)
 
@@ -356,6 +380,8 @@ class QueueWidget(QWidget):
             if width:
                 label.setFixedWidth(width)
             layout.addWidget(label, 1 if text == "Título" else 0)
+            if text == "Calidad":
+                self._list_quality_header = label
         progress_label = QLabel("Progreso", header)
         progress_label.setMinimumWidth(120)
         layout.addWidget(progress_label, 1)

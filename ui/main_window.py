@@ -8,7 +8,18 @@ from uuid import uuid4
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
-from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QSplitter, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
+)
 
 from config.app_config import AppConfig
 from config.settings import Settings
@@ -36,6 +47,7 @@ from widgets.footer_widget import FooterWidget
 from widgets.log_widget import LogWidget
 from widgets.queue_widget import QueueWidget
 from widgets.settings_widget import SettingsWidget
+from widgets.simple_mode_widget import SimpleModeWidget
 from widgets.status_widget import StatusWidget
 from widgets.toolbar_widget import ToolbarWidget
 
@@ -105,12 +117,15 @@ class MainWindow(QMainWindow):
         self._playlist_range_history_service: PlaylistRangeHistoryService = PlaylistRangeHistoryService()
         self._download_history_service: DownloadHistoryService = DownloadHistoryService()
         self._toolbar_widget: ToolbarWidget
+        self._simple_mode_widget: SimpleModeWidget
         self._queue_widget: QueueWidget
         self._log_widget: LogWidget
         self._status_widget: StatusWidget
         self._settings_widget: SettingsWidget
         self._background_widget: BackgroundWidget
         self._side_panel: QWidget
+        self._content_splitter: QSplitter
+        self._mode_combo_box: QComboBox
         self._configure_window()
         self._build_menu()
         self._build_layout()
@@ -183,10 +198,10 @@ class MainWindow(QMainWindow):
         view_menu = self.menuBar().addMenu("Vista")
         focus_url_action: QAction = QAction("Enfocar URL", self)
         focus_url_action.setShortcut("Ctrl+L")
-        focus_url_action.triggered.connect(lambda: self._toolbar_widget.focus_url_input())
+        focus_url_action.triggered.connect(self._focus_url_input)
         output_folder_action: QAction = QAction("Seleccionar carpeta de salida", self)
         output_folder_action.setShortcut("Ctrl+O")
-        output_folder_action.triggered.connect(lambda: self._settings_widget.select_output_folder())
+        output_folder_action.triggered.connect(self._select_output_folder)
         settings_action: QAction = QAction("Abrir ajustes", self)
         settings_action.setShortcut("Ctrl+,")
         settings_action.triggered.connect(self._focus_settings_panel)
@@ -223,6 +238,7 @@ class MainWindow(QMainWindow):
             playlist_limit=self._settings.max_playlist_items,
             parent=central_widget,
         )
+        self._simple_mode_widget = SimpleModeWidget(self._settings.output_folder, central_widget)
         self._queue_widget = QueueWidget(central_widget)
         self._queue_widget.set_compact_mode(self._settings.compact_mode)
         self._queue_widget.set_view_mode(self._settings.queue_view_mode)
@@ -236,6 +252,7 @@ class MainWindow(QMainWindow):
 
         content_splitter: QSplitter = QSplitter(Qt.Orientation.Vertical, main_splitter)
         content_splitter.setObjectName("mainContentSplitter")
+        self._content_splitter = content_splitter
         content_splitter.addWidget(self._queue_widget)
         content_splitter.addWidget(self._log_widget)
         content_splitter.setStretchFactor(0, 3)
@@ -258,11 +275,31 @@ class MainWindow(QMainWindow):
         main_splitter.setStretchFactor(0, 1)
         main_splitter.setStretchFactor(1, 0)
 
+        layout.addWidget(self._build_mode_selector(central_widget))
         layout.addWidget(self._toolbar_widget)
+        layout.addWidget(self._simple_mode_widget)
         layout.addWidget(main_splitter, 1)
         layout.addWidget(self._status_widget)
         layout.addWidget(footer_widget)
         self._apply_background_state()
+        self._apply_ui_mode(self._settings.ui_mode)
+
+    def _build_mode_selector(self, parent: QWidget) -> QWidget:
+        """Create the persistent switch between simple and advanced interfaces."""
+        container = QWidget(parent)
+        container.setObjectName("uiModeSelector")
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(16, 8, 16, 0)
+        layout.setSpacing(8)
+        layout.addWidget(QLabel("Modo de interfaz:", container))
+        self._mode_combo_box = QComboBox(container)
+        self._mode_combo_box.addItem("Modo Simple", "simple")
+        self._mode_combo_box.addItem("Modo Avanzado", "advanced")
+        selected_index = self._mode_combo_box.findData(self._settings.ui_mode)
+        self._mode_combo_box.setCurrentIndex(max(0, selected_index))
+        layout.addWidget(self._mode_combo_box)
+        layout.addStretch(1)
+        return container
 
     def _connect_signals(self) -> None:
         """Connect main window widget signals."""
@@ -277,6 +314,16 @@ class MainWindow(QMainWindow):
         self._toolbar_widget.about_requested.connect(self._show_about_dialog)
         self._toolbar_widget.queue_search_changed.connect(self._queue_widget.set_search_text)
         self._toolbar_widget.queue_sort_changed.connect(self._queue_widget.set_sort_mode)
+        self._simple_mode_widget.add_video_requested.connect(self._add_simple_video_to_queue)
+        self._simple_mode_widget.add_playlist_requested.connect(self._add_simple_playlist_to_queue)
+        self._simple_mode_widget.change_folder_requested.connect(self._select_output_folder)
+        self._simple_mode_widget.download_all_requested.connect(self._start_all_downloads)
+        self._simple_mode_widget.download_selected_requested.connect(self._start_selected_downloads)
+        self._simple_mode_widget.select_all_requested.connect(self._select_all_queue_items)
+        self._simple_mode_widget.deselect_all_requested.connect(self._deselect_all_queue_items)
+        self._simple_mode_widget.remove_selected_requested.connect(self._queue_widget.remove_selected_items)
+        self._simple_mode_widget.cancel_requested.connect(self._cancel_all_downloads)
+        self._mode_combo_box.currentIndexChanged.connect(self._save_ui_mode)
         self._queue_widget.queue_changed.connect(self._handle_queue_changed)
         self._queue_widget.view_mode_changed.connect(self._save_queue_view_mode)
         self._settings_widget.settings_changed.connect(self._save_settings)
@@ -289,6 +336,19 @@ class MainWindow(QMainWindow):
         self._download_queue_service.download_completed.connect(self._handle_download_completed)
         self._download_queue_service.log_received.connect(self._handle_download_log)
         self._download_queue_service.queue_finished.connect(self._handle_download_queue_finished)
+
+    def _add_simple_video_to_queue(self, source_url: str, media_format: str) -> None:
+        """Add one URL using the simple mode's best-quality policy."""
+        self._add_video_to_queue(source_url, media_format, "best")
+
+    def _add_simple_playlist_to_queue(self, source_url: str, media_format: str) -> None:
+        """Add the configured default playlist range at best quality."""
+        playlist_range = PlaylistRange.from_optional_end(
+            self._settings.playlist_start_index,
+            self._settings.playlist_end_index or None,
+            self._settings.max_playlist_items,
+        )
+        self._queue_playlist_range(source_url, media_format, "best", playlist_range)
 
     def _add_video_to_queue(
         self,
@@ -529,9 +589,46 @@ class MainWindow(QMainWindow):
 
     def _save_queue_view_mode(self, view_mode: str) -> None:
         """Persist the selected queue renderer without changing other settings."""
+        if self._settings.ui_mode == "simple":
+            return
         updated_settings = self._settings.with_queue_view_mode(view_mode)
         self._settings_manager.save(updated_settings)
         self._settings = updated_settings
+
+    def _save_ui_mode(self, _index: int | None = None) -> None:
+        """Persist and apply the interface mode chosen in the visible selector."""
+        selected_mode = str(self._mode_combo_box.currentData())
+        updated_settings = self._settings.with_ui_mode(selected_mode)
+        self._settings_manager.save(updated_settings)
+        self._settings = updated_settings
+        self._apply_ui_mode(updated_settings.ui_mode)
+
+    def _apply_ui_mode(self, ui_mode: str) -> None:
+        """Show the selected interface without changing queue or download state.
+
+        Args:
+            ui_mode: Interface mode validated by the settings model.
+        """
+        is_simple = ui_mode == "simple"
+        self._toolbar_widget.setVisible(not is_simple)
+        self._simple_mode_widget.setVisible(is_simple)
+        self._side_panel.setVisible(not is_simple)
+        self._log_widget.setVisible(not is_simple)
+        self._content_splitter.setSizes((1, 0) if is_simple else (3, 1))
+        self._queue_widget.set_simple_mode(is_simple)
+        self._queue_widget.set_compact_mode(True if is_simple else self._settings.compact_mode)
+        self._queue_widget.set_view_mode("list" if is_simple else self._settings.queue_view_mode)
+        self._mode_combo_box.blockSignals(True)
+        selected_index = self._mode_combo_box.findData(ui_mode)
+        self._mode_combo_box.setCurrentIndex(max(0, selected_index))
+        self._mode_combo_box.blockSignals(False)
+
+    def _focus_url_input(self) -> None:
+        """Focus the active interface's URL input."""
+        if self._settings.ui_mode == "simple":
+            self._simple_mode_widget.focus_url_input()
+            return
+        self._toolbar_widget.focus_url_input()
 
     def _restore_persisted_queue(self) -> None:
         """Restore queue items persisted from a previous session."""
@@ -828,6 +925,11 @@ class MainWindow(QMainWindow):
         self._log_widget.append_info(f"Descargas iniciadas: {len(ready_items)}")
         self._status_widget.set_status_message("descargando")
 
+    def _start_all_downloads(self) -> None:
+        """Select the full shared queue and start ready items."""
+        self._queue_widget.select_all_items()
+        self._start_selected_downloads()
+
     def _cancel_current_download(self) -> None:
         """Cancel the current playlist analysis or active download."""
         playlist_worker: PlaylistWorker | None = next(iter(self._playlist_workers.values()), None)
@@ -995,9 +1097,10 @@ class MainWindow(QMainWindow):
         self._settings = settings
         self._download_queue_service.update_max_concurrent_downloads(settings.max_concurrent_downloads)
         self._settings_widget.update_settings(settings)
+        self._simple_mode_widget.set_output_folder(settings.output_folder)
         self._background_widget.set_background_image_path(settings.background_image_path)
         self._background_widget.set_background_opacity(settings.background_opacity)
-        self._queue_widget.set_compact_mode(settings.compact_mode)
+        self._queue_widget.set_compact_mode(True if settings.ui_mode == "simple" else settings.compact_mode)
         self._apply_background_state()
         self._toolbar_widget.set_download_preferences(
             settings.selected_format,
@@ -1011,6 +1114,17 @@ class MainWindow(QMainWindow):
         )
         self._log_widget.append_info("Ajustes guardados.")
         self._status_widget.set_status_message("ajustes guardados")
+
+    def _select_output_folder(self) -> None:
+        """Choose and persist the download destination from either interface mode."""
+        selected_folder = QFileDialog.getExistingDirectory(
+            self,
+            "Seleccionar carpeta de salida",
+            self._settings.output_folder,
+        )
+        if not selected_folder:
+            return
+        self._save_settings(replace(self._settings, output_folder=selected_folder))
 
     def _show_settings_warning(self, message: str) -> None:
         """Show a non-invasive settings warning in log and status widgets."""

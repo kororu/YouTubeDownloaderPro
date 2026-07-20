@@ -14,6 +14,8 @@ QWidget#mainContentArea {
 }
 
 QWidget#toolbarWidget,
+QWidget#simpleModeWidget,
+QWidget#uiModeSelector,
 QWidget#statusWidget,
 QWidget#footerWidget {
     background-color: rgba(31, 35, 40, 226);
@@ -25,6 +27,26 @@ QFrame#toolbarGroup {
 
 QWidget#toolbarWidget QLabel {
     color: #c9d1d9;
+}
+
+QWidget#simpleModeWidget QLabel,
+QWidget#uiModeSelector QLabel {
+    color: #c9d1d9;
+}
+
+QFrame#simpleModeInputFrame {
+    background-color: rgba(31, 35, 40, 226);
+    border: 1px solid #3d444d;
+    border-radius: 6px;
+}
+
+QLabel#simpleModeDestination {
+    color: #8b949e;
+}
+
+QLabel#simpleModeQualityLabel {
+    color: #8b949e;
+    font-size: 9pt;
 }
 
 QWidget#toolbarWidget QPushButton,
