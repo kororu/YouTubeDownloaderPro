@@ -93,6 +93,18 @@ class YtDlpCommandBuilder:
         write_subtitles: bool = False,
         write_auto_subtitles: bool = False,
         subtitle_languages: str = "es,en",
+        download_rate_limit: int = 0,
+        retries: int = 3,
+        fragment_retries: int = 3,
+        socket_timeout: int = 30,
+        sleep_interval: int = 0,
+        prefer_ipv4: bool = False,
+        prefer_ipv6: bool = False,
+        continue_downloads: bool = True,
+        no_overwrites: bool = False,
+        use_browser_cookies: bool = False,
+        browser_cookies_source: str = "none",
+        proxy_url: str = "",
     ) -> list[str]:
         """Build a future download command without executing it.
 
@@ -118,6 +130,15 @@ class YtDlpCommandBuilder:
             "-o",
             output_template,
         ]
+        if download_rate_limit > 0: command.extend(["--limit-rate", str(download_rate_limit)])
+        command.extend(["--retries", str(max(0, retries)), "--fragment-retries", str(max(0, fragment_retries)), "--socket-timeout", str(max(0, socket_timeout))])
+        if sleep_interval > 0: command.extend(["--sleep-interval", str(sleep_interval)])
+        if prefer_ipv4: command.append("--force-ipv4")
+        elif prefer_ipv6: command.append("--force-ipv6")
+        if continue_downloads: command.append("--continue")
+        if no_overwrites: command.append("--no-overwrites")
+        if use_browser_cookies and browser_cookies_source in {"chrome", "edge", "firefox", "brave"}: command.extend(["--cookies-from-browser", browser_cookies_source])
+        if proxy_url.strip(): command.extend(["--proxy", proxy_url.strip()])
         if media_format is DownloadFormat.MP4:
             command.extend(["--merge-output-format", "mp4", "-f", self._video_format_selector(quality)])
         else:

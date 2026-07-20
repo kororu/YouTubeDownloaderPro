@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 APPLICATION_NAME: str = "YouTube Downloader Pro"
-APPLICATION_VERSION: str = "0.7.0"
+APPLICATION_VERSION: str = "0.8.0"
 APPLICATION_AUTHOR: str = "Ariel Ponce"
 ORGANIZATION_NAME: str = "YouTube Downloader Pro"
 

@@ -49,6 +49,20 @@ class Settings:
     prevent_queue_duplicates: bool
     warn_already_downloaded: bool
     allow_redownload_completed: bool
+    download_rate_limit: int
+    retries: int
+    fragment_retries: int
+    socket_timeout: int
+    sleep_interval: int
+    prefer_ipv4: bool
+    prefer_ipv6: bool
+    continue_downloads: bool
+    no_overwrites: bool
+    use_browser_cookies: bool
+    browser_cookies_source: str
+    proxy_enabled: bool
+    proxy_url: str
+    diagnostic_mode: bool
     download_thumbnail: bool
     write_metadata: bool
     write_subtitles: bool
@@ -85,6 +99,9 @@ class Settings:
             prevent_queue_duplicates=True,
             warn_already_downloaded=True,
             allow_redownload_completed=False,
+            download_rate_limit=0, retries=3, fragment_retries=3, socket_timeout=30, sleep_interval=0,
+            prefer_ipv4=False, prefer_ipv6=False, continue_downloads=True, no_overwrites=False,
+            use_browser_cookies=False, browser_cookies_source="none", proxy_enabled=False, proxy_url="", diagnostic_mode=False,
             download_thumbnail=False,
             write_metadata=False,
             write_subtitles=False,
@@ -148,6 +165,12 @@ class Settings:
             prevent_queue_duplicates=_read_bool(data, "prevent_queue_duplicates", defaults.prevent_queue_duplicates),
             warn_already_downloaded=_read_bool(data, "warn_already_downloaded", defaults.warn_already_downloaded),
             allow_redownload_completed=_read_bool(data, "allow_redownload_completed", defaults.allow_redownload_completed),
+            download_rate_limit=_read_int(data, "download_rate_limit", 0, 0, 1000000000),
+            retries=_read_int(data, "retries", 3, 0, 100), fragment_retries=_read_int(data, "fragment_retries", 3, 0, 100),
+            socket_timeout=_read_int(data, "socket_timeout", 30, 0, 600), sleep_interval=_read_int(data, "sleep_interval", 0, 0, 600),
+            prefer_ipv4=_read_bool(data, "prefer_ipv4", False), prefer_ipv6=_read_bool(data, "prefer_ipv6", False), continue_downloads=_read_bool(data, "continue_downloads", True), no_overwrites=_read_bool(data, "no_overwrites", False),
+            use_browser_cookies=_read_bool(data, "use_browser_cookies", False), browser_cookies_source=_read_choice(data, "browser_cookies_source", "none", ("none", "chrome", "edge", "firefox", "brave")),
+            proxy_enabled=_read_bool(data, "proxy_enabled", False), proxy_url=_read_string(data, "proxy_url", ""), diagnostic_mode=_read_bool(data, "diagnostic_mode", False),
             download_thumbnail=_read_bool(data, "download_thumbnail", defaults.download_thumbnail),
             write_metadata=_read_bool(data, "write_metadata", defaults.write_metadata),
             write_subtitles=_read_bool(data, "write_subtitles", defaults.write_subtitles),

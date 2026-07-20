@@ -15,6 +15,7 @@ from config.settings import Settings
 from config.settings_manager import SettingsManager
 from core.dependency_checker import DependencyChecker, DependencyCheckResult
 from dialogs.about_dialog import AboutDialog
+from dialogs.diagnostics_dialog import DiagnosticsDialog
 from dialogs.history_dialog import HistoryDialog
 from models.download_enums import AudioQuality, DownloadFormat, DownloadQuality, DownloadStatus
 from models.download_item import DownloadItem
@@ -199,6 +200,9 @@ class MainWindow(QMainWindow):
         history_action: QAction = QAction("Historial de descargas", self)
         history_action.triggered.connect(self._show_history_dialog)
         self.menuBar().addMenu("Historial").addAction(history_action)
+        diagnostics_action: QAction = QAction("Diagnóstico", self)
+        diagnostics_action.triggered.connect(self._show_diagnostics_dialog)
+        self.menuBar().addMenu("Herramientas").addAction(diagnostics_action)
 
     def _build_layout(self) -> None:
         """Build the main window layout."""
@@ -875,6 +879,17 @@ class MainWindow(QMainWindow):
         """Open the searchable local download history."""
         dialog = HistoryDialog(self._download_history_service.load(), self)
         dialog.retry_requested.connect(self._retry_history_item)
+        dialog.exec()
+
+    def _show_diagnostics_dialog(self) -> None:
+        """Open the non-invasive system diagnostics dialog."""
+        dialog = DiagnosticsDialog(
+            self._settings_manager.settings_file,
+            self._download_history_service._history_path,
+            self._queue_widget.item_count(),
+            len(self._download_history_service.load()),
+            self,
+        )
         dialog.exec()
 
     def _retry_history_item(self, history_item: object) -> None:
