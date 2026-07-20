@@ -49,14 +49,13 @@ Convenciones:
 
 ## v0.6.0 - Visual polish and UX
 
-- `[ ]` Rediseñar la barra superior en dos filas o grupos.
-- `[ ]` Mejorar separación de botones y corregir textos cortados.
-- `[ ]` Mejorar combos y desplegables.
-- `[ ]` Mejorar escalado del fondo y añadir opacidad configurable.
-- `[ ]` Añadir modo compacto.
-- `[ ]` Mejorar la vista de cola.
-- `[ ]` Añadir miniaturas a `QueueItemWidget` e iconos por estado.
-- `[ ]` Mejorar pantalla vacía, tooltips y atajos de teclado.
+- `[x]` Rediseñar la barra superior en grupos y mejorar separación de botones.
+- `[x]` Mejorar combos y desplegables dark.
+- `[x]` Mejorar escalado del fondo y añadir opacidad configurable.
+- `[x]` Añadir modo compacto persistente.
+- `[x]` Mejorar la vista de cola, progreso, origen y estado descargado.
+- `[x]` Mejorar estados vacíos, tooltips y atajos de teclado.
+- `[ ]` Validar visualmente todas las resoluciones de pantalla y el `.exe` en Windows.
 
 ## v0.7.0 - Download history and duplicate control
 

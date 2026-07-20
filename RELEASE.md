@@ -3,12 +3,12 @@
 ## Estado de versión
 
 - Producto: YouTube Downloader Pro.
-- Versión visible actual: `0.5.0`.
+- Versión visible actual: `0.6.0`.
 - Plataforma: Windows.
 - Formato: ejecutable PyInstaller `onedir` y paquete portable.
-- Estado: mejoras de `v0.5.0` presentes en el working tree; release pendiente de validación manual completa.
+- Estado: mejoras de `v0.6.0` presentes en el working tree; release pendiente de validación manual completa.
 
-Este documento no implica que `v0.5.0` esté publicada.
+Este documento no implica que `v0.6.0` esté publicada.
 
 ## Requisitos de build
 
@@ -36,7 +36,7 @@ dist\YouTubeDownloaderPro\YouTubeDownloaderPro.exe
 release\YouTubeDownloaderPro_Portable\
 ```
 
-## Validación obligatoria para v0.5.0
+## Validación obligatoria para v0.6.0
 
 ```powershell
 python app.py
@@ -50,6 +50,7 @@ Comprobar manualmente:
 
 - Inicio, cierre, tema dark, ajustes y persistencia de cola.
 - Fondo opcional, escalado, contraste y legibilidad.
+- Toolbar agrupada, opacidad de fondo, modo compacto, estados vacíos, tooltips y atajos.
 - Descarga individual MP4 y MP3 sin consolas emergentes.
 - Rangos de playlist `1-200`, `201-400` y `401-600`.
 - `Cargar siguientes`, historial por URL y omisión de duplicados.

@@ -18,6 +18,8 @@ class Settings:
         selected_audio_quality: Preferred MP3 bitrate or best/original audio.
         theme: Active visual theme name, forced to dark for compatibility.
         background_image_path: Optional custom application background image path.
+        background_opacity: Image visibility behind the dark readability overlay.
+        compact_mode: Whether the interface uses reduced visual spacing.
         download_thumbnail: Whether downloads include a thumbnail file.
         write_metadata: Whether downloads include an info JSON file.
         write_subtitles: Whether published subtitles are requested.
@@ -42,6 +44,8 @@ class Settings:
     selected_audio_quality: str
     theme: str
     background_image_path: str
+    background_opacity: float
+    compact_mode: bool
     download_thumbnail: bool
     write_metadata: bool
     write_subtitles: bool
@@ -73,6 +77,8 @@ class Settings:
             selected_audio_quality="best",
             theme="dark",
             background_image_path="",
+            background_opacity=0.28,
+            compact_mode=False,
             download_thumbnail=False,
             write_metadata=False,
             write_subtitles=False,
@@ -131,6 +137,8 @@ class Settings:
             ),
             theme="dark",
             background_image_path=_read_background_image_path(data, defaults.background_image_path),
+            background_opacity=_read_float(data, "background_opacity", defaults.background_opacity, 0.10, 0.55),
+            compact_mode=_read_bool(data, "compact_mode", defaults.compact_mode),
             download_thumbnail=_read_bool(data, "download_thumbnail", defaults.download_thumbnail),
             write_metadata=_read_bool(data, "write_metadata", defaults.write_metadata),
             write_subtitles=_read_bool(data, "write_subtitles", defaults.write_subtitles),
@@ -206,6 +214,8 @@ class Settings:
         selected_quality: str,
         selected_audio_quality: str,
         background_image_path: str,
+        background_opacity: float,
+        compact_mode: bool,
         download_thumbnail: bool,
         write_metadata: bool,
         write_subtitles: bool,
@@ -256,6 +266,8 @@ class Settings:
             ),
             theme="dark",
             background_image_path=normalized_background_image_path,
+            background_opacity=max(0.10, min(0.55, background_opacity)),
+            compact_mode=compact_mode,
             download_thumbnail=download_thumbnail,
             write_metadata=write_metadata,
             write_subtitles=write_subtitles,
@@ -304,6 +316,14 @@ def _read_bool(data: dict[str, Any], key: str, default: bool) -> bool:
     value: Any = data.get(key)
     if isinstance(value, bool):
         return value
+    return default
+
+
+def _read_float(data: dict[str, Any], key: str, default: float, minimum: float, maximum: float) -> float:
+    """Read a numeric setting constrained to a closed range."""
+    value: Any = data.get(key)
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return max(minimum, min(maximum, float(value)))
     return default
 
 

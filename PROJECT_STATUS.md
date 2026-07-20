@@ -4,7 +4,7 @@
 
 - Proyecto: YouTube Downloader Pro.
 - Autor: Ariel Ponce.
-- Versión visible actual: `v0.5.0`.
+- Versión visible actual: `v0.6.0`.
 - Plataforma objetivo: Windows.
 - Stack: Python 3.12+, PySide6, QThread, `subprocess`, `yt-dlp`, `ffmpeg`, JSON, QSS y PyInstaller.
 - Distribución: ejecutable PyInstaller `onedir` y paquete portable.
@@ -32,7 +32,7 @@
 - Scripts `scripts\build_windows.ps1` y `scripts\package_portable.ps1`.
 - Launcher `run_app.bat` y guía `README_INSTALL.txt` para el portable.
 
-## En progreso en v0.5.0
+## En progreso en v0.6.0
 
 Las siguientes mejoras están implementadas en el working tree, pero siguen pendientes de validación manual completa y de su proceso normal de commit/release:
 
@@ -48,6 +48,9 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 - Persistencia compatible de opciones de audio y archivos auxiliares en settings y cola.
 - Comandos `yt-dlp` para M4A, OPUS, FLAC, WAV y best audio.
 - Validaciones no invasivas para WAV, extensiones variables, archivos extra y subtítulos.
+- Toolbar organizada en grupos, controles dark legibles y desplegables con contraste consistente.
+- Fondo cover adaptable con opacidad persistente, paneles semitransparentes y modo compacto.
+- Estados vacíos, tooltips, atajos básicos, contadores de cola y acciones de copiar/limpiar registro.
 
 ## Pendiente de verificación
 
@@ -58,8 +61,8 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 - Probar YouTube Mix de 400, 1000 o más entradas sin bloquear la interfaz.
 - Confirmar `Cargar siguientes`, deduplicación y persistencia por URL entre sesiones.
 - Confirmar cancelación durante el análisis y claridad de los logs de progreso.
-- Revisar layout superior, separación de controles, textos cortados y desplegables.
-- Validar tema dark, imagen de fondo, escalado y contraste en el `.exe`.
+- Revisar visualmente el layout superior, atajos y desplegables en distintas resoluciones.
+- Validar tema dark, imagen de fondo, opacidad, modo compacto, escalado y contraste en el `.exe`.
 - Probar el paquete portable generado en otro PC Windows sin VS Code.
 - Mejorar, si las pruebas lo requieren, el contenido y robustez del empaquetado portable.
 
@@ -137,7 +140,7 @@ git diff --stat
 
 ## Próximo paso recomendado
 
-Completar la matriz de pruebas manuales de `v0.5.0` con MP4, todos los formatos de audio, archivos auxiliares, playlists, plantillas y el paquete portable en otro PC. Corregir solo los defectos confirmados antes de etiquetar o publicar la versión.
+Completar la matriz de pruebas manuales de `v0.6.0`: verificar toolbar, fondo, opacidad, modo compacto, cola, log, atajos y el paquete portable, además de las descargas reales pendientes. Corregir solo los defectos confirmados antes de etiquetar o publicar la versión.
 
 ## Validaciones automáticas realizadas
 

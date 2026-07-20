@@ -7,8 +7,8 @@ from pathlib import Path
 from uuid import uuid4
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QCloseEvent
-from PySide6.QtWidgets import QFileDialog, QMainWindow, QSplitter, QVBoxLayout, QWidget
+from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
+from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QSplitter, QVBoxLayout, QWidget
 
 from config.app_config import AppConfig
 from config.settings import Settings
@@ -125,7 +125,11 @@ class MainWindow(QMainWindow):
             self._config.window_minimum_height,
         )
 
-        central_widget: BackgroundWidget = BackgroundWidget(self._settings.background_image_path, self)
+        central_widget: BackgroundWidget = BackgroundWidget(
+            self._settings.background_image_path,
+            self._settings.background_opacity,
+            self,
+        )
         self.setCentralWidget(central_widget)
         self._background_widget = central_widget
 
@@ -142,16 +146,20 @@ class MainWindow(QMainWindow):
         cancel_current_action.triggered.connect(self._cancel_current_download)
 
         cancel_all_action: QAction = QAction("Cancelar todo", self)
-        cancel_all_action.setShortcut("Ctrl+Shift+K")
+        cancel_all_action.setShortcut("Ctrl+Shift+C")
         cancel_all_action.triggered.connect(self._cancel_all_downloads)
 
         select_all_action: QAction = QAction("Seleccionar todo", self)
         select_all_action.setShortcut("Ctrl+A")
-        select_all_action.triggered.connect(self._select_all_queue_items)
+        select_all_action.triggered.connect(self._select_all_if_queue_focused)
 
         deselect_all_action: QAction = QAction("Deseleccionar", self)
         deselect_all_action.setShortcut("Ctrl+Shift+A")
         deselect_all_action.triggered.connect(self._deselect_all_queue_items)
+
+        remove_selected_action: QAction = QAction("Quitar seleccionados", self)
+        remove_selected_action.setShortcut(QKeySequence(Qt.Key.Key_Delete))
+        remove_selected_action.triggered.connect(self._remove_selected_if_queue_focused)
 
         queue_menu.addAction(start_action)
         queue_menu.addAction(cancel_current_action)
@@ -159,14 +167,28 @@ class MainWindow(QMainWindow):
         queue_menu.addSeparator()
         queue_menu.addAction(select_all_action)
         queue_menu.addAction(deselect_all_action)
+        queue_menu.addAction(remove_selected_action)
 
         log_menu = self.menuBar().addMenu("Registro")
         export_logs_action: QAction = QAction("Exportar registro", self)
-        export_logs_action.setShortcut("Ctrl+L")
+        export_logs_action.setShortcut("Ctrl+Shift+E")
         export_logs_action.triggered.connect(self._export_logs)
         log_menu.addAction(export_logs_action)
 
+        view_menu = self.menuBar().addMenu("Vista")
+        focus_url_action: QAction = QAction("Enfocar URL", self)
+        focus_url_action.setShortcut("Ctrl+L")
+        focus_url_action.triggered.connect(lambda: self._toolbar_widget.focus_url_input())
+        output_folder_action: QAction = QAction("Seleccionar carpeta de salida", self)
+        output_folder_action.setShortcut("Ctrl+O")
+        output_folder_action.triggered.connect(lambda: self._settings_widget.select_output_folder())
+        settings_action: QAction = QAction("Abrir ajustes", self)
+        settings_action.setShortcut("Ctrl+,")
+        settings_action.triggered.connect(self._focus_settings_panel)
+        view_menu.addActions((focus_url_action, output_folder_action, settings_action))
+
         about_action: QAction = QAction("Acerca de", self)
+        about_action.setShortcut("F1")
         about_action.triggered.connect(self._show_about_dialog)
         self.menuBar().addMenu("Ayuda").addAction(about_action)
 
@@ -190,6 +212,7 @@ class MainWindow(QMainWindow):
             parent=central_widget,
         )
         self._queue_widget = QueueWidget(central_widget)
+        self._queue_widget.set_compact_mode(self._settings.compact_mode)
         self._log_widget = LogWidget(central_widget)
         self._status_widget = StatusWidget(central_widget)
         self._settings_widget = SettingsWidget(self._settings, central_widget)
@@ -351,7 +374,10 @@ class MainWindow(QMainWindow):
 
     def _handle_queue_changed(self, total_items: int, selected_items: int) -> None:
         """Update status when queue selection changes."""
-        self._status_widget.update_queue_status(total_items, selected_items)
+        self._status_widget.update_item_counters(
+            self._queue_widget.all_download_items(),
+            selected_items,
+        )
         if self._active_playlist_loads == 0:
             self._persist_queue()
 
@@ -716,6 +742,22 @@ class MainWindow(QMainWindow):
         """Select all queue items."""
         self._queue_widget.select_all_items()
 
+    def _select_all_if_queue_focused(self) -> None:
+        """Select all queue items only when the queue owns keyboard focus."""
+        focused_widget: QWidget | None = QApplication.focusWidget()
+        if focused_widget is not None and (
+            focused_widget is self._queue_widget or self._queue_widget.isAncestorOf(focused_widget)
+        ):
+            self._select_all_queue_items()
+
+    def _remove_selected_if_queue_focused(self) -> None:
+        """Remove selected queue items only when the queue owns keyboard focus."""
+        focused_widget: QWidget | None = QApplication.focusWidget()
+        if focused_widget is not None and (
+            focused_widget is self._queue_widget or self._queue_widget.isAncestorOf(focused_widget)
+        ):
+            self._queue_widget.remove_selected_items()
+
     def _deselect_all_queue_items(self) -> None:
         """Deselect all queue items."""
         self._queue_widget.deselect_all_items()
@@ -777,6 +819,8 @@ class MainWindow(QMainWindow):
         self._download_queue_service.update_max_concurrent_downloads(settings.max_concurrent_downloads)
         self._settings_widget.update_settings(settings)
         self._background_widget.set_background_image_path(settings.background_image_path)
+        self._background_widget.set_background_opacity(settings.background_opacity)
+        self._queue_widget.set_compact_mode(settings.compact_mode)
         self._apply_background_state()
         self._toolbar_widget.set_download_preferences(
             settings.selected_format,

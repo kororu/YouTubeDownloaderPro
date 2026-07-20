@@ -16,7 +16,7 @@ QWidget#mainContentArea {
 QWidget#toolbarWidget,
 QWidget#statusWidget,
 QWidget#footerWidget {
-    background-color: rgba(31, 35, 40, 244);
+    background-color: rgba(31, 35, 40, 226);
 }
 
 QFrame#toolbarGroup {
@@ -185,6 +185,18 @@ QFrame#queueItemWidget {
     background-color: rgba(31, 35, 40, 222);
     border: 1px solid #3d444d;
     border-radius: 8px;
+}
+
+QFrame#queueItemWidget[compact="true"] {
+    border-radius: 6px;
+}
+
+QFrame#queueItemWidget[compact="true"] QLabel#queueItemUrl {
+    max-height: 18px;
+}
+
+QFrame#queueItemWidget[compact="true"] {
+    margin: 0px;
 }
 
 QLabel#queueItemMetadata,

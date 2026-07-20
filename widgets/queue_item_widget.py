@@ -111,7 +111,9 @@ class QueueItemWidget(QFrame):
         self._metadata_label: QLabel
         self._progress_label: QLabel
         self._error_label: QLabel
+        self._layout: QHBoxLayout
         self.setObjectName("queueItemWidget")
+        self.setProperty("compact", False)
         self._build_layout()
 
     @property
@@ -187,6 +189,18 @@ class QueueItemWidget(QFrame):
         """
         self._checkbox.setChecked(selected)
 
+    def set_compact_mode(self, compact_mode: bool) -> None:
+        """Apply the selected density without changing item contents."""
+        self.setProperty("compact", compact_mode)
+        if compact_mode:
+            self._layout.setContentsMargins(10, 7, 10, 7)
+        else:
+            self._layout.setContentsMargins(14, 12, 14, 12)
+        self._layout.setSpacing(9 if compact_mode else 14)
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.update()
+
     def matches_search(self, search_text: str) -> bool:
         """Return whether the item matches a search term.
 
@@ -223,8 +237,9 @@ class QueueItemWidget(QFrame):
     def _build_layout(self) -> None:
         """Build the queue item layout."""
         layout: QHBoxLayout = QHBoxLayout(self)
-        layout.setContentsMargins(12, 10, 12, 10)
-        layout.setSpacing(12)
+        self._layout = layout
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(14)
 
         self._checkbox = QCheckBox(self)
         self._checkbox.toggled.connect(self._emit_selection_changed)
@@ -257,6 +272,8 @@ class QueueItemWidget(QFrame):
         text_layout.addWidget(self._error_label)
 
         remove_button: QPushButton = QPushButton("Quitar", self)
+        remove_button.setToolTip("Quita este elemento de la cola.")
+        remove_button.setMinimumWidth(78)
         remove_button.clicked.connect(self._emit_remove_requested)
 
         layout.addWidget(self._checkbox)
@@ -289,6 +306,8 @@ class QueueItemWidget(QFrame):
         if self._item_data.playlist_index is not None:
             origin_label: str = "Mix" if self._item_data.is_youtube_mix else "Playlist"
             metadata_parts.append(f"{origin_label}: #{self._item_data.playlist_index}")
+        if self._item_data.status == "Completado":
+            metadata_parts.append("Descargado")
         self._metadata_label.setText(" | ".join(metadata_parts))
         self._progress_label.setText(f"Progreso: {self._item_data.progress_percentage:.1f}%")
         error_message: str = self._item_data.error_message or ""

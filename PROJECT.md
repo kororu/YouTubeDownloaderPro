@@ -2,7 +2,7 @@
 
 YouTube Downloader Pro es un frontend de escritorio para `yt-dlp` y `ffmpeg`. Su objetivo es ofrecer una experiencia Windows profesional, modular y distribuible mediante PyInstaller, sin ocultar que la compatibilidad con fuentes externas depende de las herramientas y sitios subyacentes.
 
-Versión visible actual: `v0.5.0`.
+Versión visible actual: `v0.6.0`.
 
 ## Arquitectura
 
@@ -46,7 +46,7 @@ La UI no debe contener lógica directa de descarga, persistencia o `subprocess`.
 
 ### En progreso
 
-El working tree de `v0.5.0` conserva ejecución silenciosa, rangos y deduplicación de `v0.3.0`, y añade audio avanzado, archivos auxiliares y organización de salida. Se requiere validación manual con descargas reales y portable antes de declarar la versión estable.
+El working tree de `v0.6.0` conserva la funcionalidad de descarga existente y añade pulido visual: toolbar agrupada, contraste dark reforzado, fondo cover con opacidad, modo compacto, estados vacíos, tooltips, atajos y registro mejorado. Se requiere validación manual con descargas reales y portable antes de declarar la versión estable.
 
 ### Problemas recientes que guían el roadmap
 

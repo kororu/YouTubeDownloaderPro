@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.0 - 2026-07-20
+
+- Reorganizada la toolbar en grupos visuales y reforzada la legibilidad de controles y desplegables dark.
+- Añadidos fondo adaptable con opacidad persistente, paneles semitransparentes y modo compacto.
+- Mejoradas cola, estados vacíos, tooltips, contadores de estado y acciones para copiar o limpiar el registro.
+- Añadidos atajos: Ctrl+L, Ctrl+D, Ctrl+Shift+C, Ctrl+O, Ctrl+,, F1, Ctrl+A y Delete según el contexto.
+
 Todos los cambios relevantes del proyecto se documentan en este archivo.
 
 ## Upcoming

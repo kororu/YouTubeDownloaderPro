@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QScrollArea,
+    QSlider,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -61,6 +62,9 @@ class SettingsWidget(QWidget):
         self._settings = settings
         self._output_folder_input.setText(settings.output_folder)
         self._background_image_input.setText(settings.background_image_path)
+        self._background_opacity_slider.setValue(round(settings.background_opacity * 100))
+        self._background_opacity_slider.setEnabled(bool(settings.background_image_path))
+        self._compact_mode_checkbox.setChecked(settings.compact_mode)
         self._set_combo_data(self._format_combo_box, settings.selected_format)
         self._set_combo_data(self._video_quality_combo_box, settings.selected_quality)
         self._set_combo_data(self._audio_quality_combo_box, settings.selected_audio_quality)
@@ -114,6 +118,12 @@ class SettingsWidget(QWidget):
         clear_background_button.clicked.connect(self._background_image_input.clear)
         background_layout.addWidget(clear_background_button)
 
+        self._background_opacity_slider = QSlider(Qt.Orientation.Horizontal, content)
+        self._background_opacity_slider.setRange(10, 55)
+        self._background_opacity_slider.setToolTip("Controla cuánto se ve la imagen sin perder legibilidad.")
+        self._compact_mode_checkbox = QCheckBox("Modo compacto", content)
+        self._compact_mode_checkbox.setToolTip("Reduce el espaciado de la interfaz y de la cola.")
+
         self._format_combo_box = QComboBox(content)
         for label, value in FORMAT_OPTIONS:
             self._format_combo_box.addItem(label, value)
@@ -142,8 +152,11 @@ class SettingsWidget(QWidget):
         self._audio_quality_combo_box.setToolTip("El bitrate solo se aplica a MP3")
 
         self._download_thumbnail_checkbox = QCheckBox("Descargar miniatura", content)
+        self._download_thumbnail_checkbox.setToolTip("Guarda una miniatura junto al archivo descargado.")
         self._write_metadata_checkbox = QCheckBox("Guardar metadata", content)
+        self._write_metadata_checkbox.setToolTip("Guarda los metadatos en un archivo JSON adicional.")
         self._write_subtitles_checkbox = QCheckBox("Descargar subtítulos", content)
+        self._write_subtitles_checkbox.setToolTip("Descarga subtítulos publicados cuando estén disponibles.")
         self._write_auto_subtitles_checkbox = QCheckBox("Subtítulos automáticos", content)
         self._write_subtitles_checkbox.toggled.connect(self._update_subtitle_controls)
         self._write_auto_subtitles_checkbox.toggled.connect(self._update_subtitle_controls)
@@ -151,6 +164,7 @@ class SettingsWidget(QWidget):
         self._subtitle_languages_input.setPlaceholderText("es,en")
 
         self._filename_template_combo_box = QComboBox(content)
+        self._filename_template_combo_box.setToolTip("Define cómo se nombran los archivos descargados.")
         for label, template in FILENAME_TEMPLATES:
             self._filename_template_combo_box.addItem(label, template)
         self._filename_template_combo_box.addItem("Personalizada", "custom")
@@ -159,10 +173,13 @@ class SettingsWidget(QWidget):
         self._custom_filename_template_input.setPlaceholderText("%(title)s.%(ext)s")
 
         self._create_channel_folder_checkbox = QCheckBox("Crear carpeta por canal", content)
+        self._create_channel_folder_checkbox.setToolTip("Organiza las descargas en una carpeta por canal.")
         self._create_playlist_folder_checkbox = QCheckBox("Crear carpeta por playlist", content)
+        self._create_playlist_folder_checkbox.setToolTip("Organiza las descargas de playlists en su propia carpeta.")
 
         self._playlist_limit_combo_box = QComboBox(content)
         self._playlist_limit_combo_box.addItems(("50", "100", "200", "500"))
+        self._playlist_limit_combo_box.setToolTip("Máximo de videos procesados en cada carga de playlist o Mix.")
         self._playlist_start_spin_box = QSpinBox(content)
         self._playlist_start_spin_box.setRange(1, 100000)
         self._playlist_end_spin_box = QSpinBox(content)
@@ -173,6 +190,8 @@ class SettingsWidget(QWidget):
 
         form_layout.addRow("Carpeta", output_layout)
         form_layout.addRow("Fondo", background_layout)
+        form_layout.addRow("Opacidad fondo", self._background_opacity_slider)
+        form_layout.addRow("Interfaz", self._compact_mode_checkbox)
         form_layout.addRow("Formato", self._format_combo_box)
         form_layout.addRow("Calidad video", self._video_quality_combo_box)
         form_layout.addRow("Calidad MP3", self._audio_quality_combo_box)
@@ -205,6 +224,10 @@ class SettingsWidget(QWidget):
         )
         if selected_folder:
             self._output_folder_input.setText(selected_folder)
+
+    def select_output_folder(self) -> None:
+        """Open the output folder picker for a keyboard shortcut."""
+        self._select_output_folder()
 
     def _select_background_image(self) -> None:
         """Open a picker for the optional background image."""
@@ -242,6 +265,8 @@ class SettingsWidget(QWidget):
             selected_quality=str(self._video_quality_combo_box.currentData()),
             selected_audio_quality=str(self._audio_quality_combo_box.currentData()),
             background_image_path=self._background_image_input.text().strip(),
+            background_opacity=self._background_opacity_slider.value() / 100,
+            compact_mode=self._compact_mode_checkbox.isChecked(),
             download_thumbnail=self._download_thumbnail_checkbox.isChecked(),
             write_metadata=self._write_metadata_checkbox.isChecked(),
             write_subtitles=self._write_subtitles_checkbox.isChecked(),

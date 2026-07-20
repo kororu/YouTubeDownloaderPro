@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QWidget
 
+from models.download_enums import DownloadStatus
+from models.download_item import DownloadItem
+
 
 class StatusWidget(QWidget):
     """Compact status area for current application state."""
@@ -30,6 +33,17 @@ class StatusWidget(QWidget):
             selected_items: Selected queue items.
         """
         self._queue_label.setText(f"Cola: {total_items} | Seleccionados: {selected_items}")
+
+    def update_item_counters(self, items: tuple[DownloadItem, ...], selected_items: int) -> None:
+        """Show compact, actionable queue state counters."""
+        completed: int = sum(item.status is DownloadStatus.COMPLETED for item in items)
+        failed: int = sum(item.status is DownloadStatus.FAILED for item in items)
+        active: int = sum(item.status is DownloadStatus.DOWNLOADING for item in items)
+        pending: int = len(items) - completed - failed - active
+        self._queue_label.setText(
+            f"Cola: {len(items)} | Seleccionados: {selected_items} | "
+            f"Pendientes: {pending} | Descargando: {active} | Completados: {completed} | Fallidos: {failed}"
+        )
 
     def update_dependency_status(self, all_available: bool) -> None:
         """Update dependency status.

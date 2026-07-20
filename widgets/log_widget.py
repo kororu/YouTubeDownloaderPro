@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
 
 MAX_VISIBLE_LOG_LINES: int = 1200
@@ -77,9 +78,14 @@ class LogWidget(QWidget):
         export_button: QPushButton = QPushButton("Exportar", self)
         export_button.clicked.connect(self.export_requested.emit)
 
+        copy_button: QPushButton = QPushButton("Copiar", self)
+        copy_button.setToolTip("Copia el registro visible al portapapeles.")
+        copy_button.clicked.connect(self._copy_log)
+
         header_layout.addWidget(title_label)
         header_layout.addStretch(1)
         header_layout.addWidget(export_button)
+        header_layout.addWidget(copy_button)
         header_layout.addWidget(clear_button)
 
         self._log_output = QPlainTextEdit(self)
@@ -95,6 +101,11 @@ class LogWidget(QWidget):
         """Clear the visible log output."""
         self._log_output.clear()
         self.append_info("Registro limpiado.")
+
+    def _copy_log(self) -> None:
+        """Copy the visible log to the system clipboard."""
+        QGuiApplication.clipboard().setText(self._log_output.toPlainText())
+        self.append_info("Registro copiado al portapapeles.")
 
     def export_to_file(self, destination_path: Path) -> None:
         """Export visible logs to a text file.

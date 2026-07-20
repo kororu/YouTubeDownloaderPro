@@ -40,6 +40,7 @@ class QueueWidget(QWidget):
         self._empty_state: QLabel
         self._search_text: str = ""
         self._sort_mode: str = "Orden de ingreso"
+        self._compact_mode: bool = False
         self._build_layout()
 
     def add_download_item(self, download_item: DownloadItem) -> None:
@@ -79,6 +80,7 @@ class QueueWidget(QWidget):
         item_widget: QueueItemWidget = QueueItemWidget(item_data, self._items_container)
         item_widget.selection_changed.connect(self._emit_queue_changed)
         item_widget.remove_requested.connect(self.remove_item)
+        item_widget.set_compact_mode(self._compact_mode)
         return item_widget
 
     def add_item(self, source_url: str, media_format: str, quality: str) -> None:
@@ -208,6 +210,13 @@ class QueueWidget(QWidget):
         self._sort_mode = sort_mode
         self._apply_sorting()
 
+    def set_compact_mode(self, compact_mode: bool) -> None:
+        """Apply the selected queue density immediately."""
+        self._compact_mode = compact_mode
+        self._items_layout.setSpacing(4 if compact_mode else 10)
+        for item_widget in self._items:
+            item_widget.set_compact_mode(compact_mode)
+
     def _build_layout(self) -> None:
         """Build the queue layout."""
         layout: QVBoxLayout = QVBoxLayout(self)
@@ -243,7 +252,7 @@ class QueueWidget(QWidget):
         self._items_layout.setSpacing(8)
 
         self._empty_state = QLabel(
-            "No hay elementos en cola.\nAgregue una URL de video o playlist desde la barra superior.",
+            "La cola está vacía\nAgrega una URL de video o playlist para comenzar.",
             self._items_container,
         )
         self._empty_state.setObjectName("emptyQueueLabel")

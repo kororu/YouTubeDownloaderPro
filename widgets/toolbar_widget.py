@@ -125,11 +125,13 @@ class ToolbarWidget(QWidget):
             self._format_combo_box.addItem(label, value)
         self._set_combo_data(self._format_combo_box, self._initial_format)
         self._format_combo_box.setMinimumWidth(145)
+        self._format_combo_box.setToolTip("Elige video MP4 o el formato de audio de salida.")
         self._format_combo_box.currentIndexChanged.connect(self._populate_quality_combo_box)
 
         self._quality_combo_box = QComboBox(self)
         self._quality_combo_box.setObjectName("qualityComboBox")
         self._quality_combo_box.setMinimumWidth(150)
+        self._quality_combo_box.setToolTip("Elige la resolución de video o bitrate de MP3.")
         self._populate_quality_combo_box()
         self._quality_combo_box.currentIndexChanged.connect(self._remember_selected_quality)
 
@@ -163,28 +165,35 @@ class ToolbarWidget(QWidget):
         self._queue_search_input.textChanged.connect(self.queue_search_changed.emit)
 
         self._add_video_button = self._create_button("Agregar video", 128)
+        self._add_video_button.setToolTip("Agrega un video individual y carga sus metadatos.")
         self._add_video_button.setEnabled(False)
         self._add_video_button.clicked.connect(self._emit_add_video_requested)
 
         self._add_playlist_button = self._create_button("Agregar playlist", 142)
+        self._add_playlist_button.setToolTip("Carga el bloque predeterminado de una playlist o Mix.")
         self._add_playlist_button.setEnabled(False)
         self._add_playlist_button.clicked.connect(self._emit_add_default_playlist_requested)
 
         self._load_range_button = self._create_button("Cargar rango", 126)
+        self._load_range_button.setToolTip("Carga el rango de posiciones indicado para la playlist o Mix.")
         self._load_range_button.setEnabled(False)
         self._load_range_button.clicked.connect(self._emit_add_playlist_requested)
 
         self._add_next_playlist_range_button = self._create_button("Cargar siguientes", 156)
+        self._add_next_playlist_range_button.setToolTip("Carga el siguiente rango pendiente de esta URL.")
         self._add_next_playlist_range_button.setEnabled(False)
         self._add_next_playlist_range_button.clicked.connect(self._emit_add_next_playlist_range_requested)
 
         start_button: QPushButton = self._create_button("Descargar seleccionados", 198)
+        start_button.setToolTip("Inicia las descargas de los elementos seleccionados.")
         start_button.clicked.connect(self.start_downloads_requested.emit)
 
         cancel_current_button: QPushButton = self._create_button("Cancelar actual", 138)
+        cancel_current_button.setToolTip("Cancela el análisis de playlist o descarga actualmente activa.")
         cancel_current_button.clicked.connect(self.cancel_current_requested.emit)
 
         cancel_all_button: QPushButton = self._create_button("Cancelar todo", 126)
+        cancel_all_button.setToolTip("Solicita cancelar todas las descargas y análisis activos.")
         cancel_all_button.clicked.connect(self.cancel_all_requested.emit)
 
         settings_button: QPushButton = self._create_button("Ajustes", 96)
@@ -304,6 +313,14 @@ class ToolbarWidget(QWidget):
     def selected_format(self) -> str:
         """Return the selected media format."""
         return str(self._format_combo_box.currentData())
+
+    def focus_url_input(self) -> None:
+        """Focus the URL input without changing its current contents."""
+        self._url_input.setFocus(Qt.FocusReason.ShortcutFocusReason)
+
+    def is_url_input_focused(self) -> bool:
+        """Return whether the URL input currently owns keyboard focus."""
+        return self._url_input.hasFocus()
 
     def selected_quality(self) -> str:
         """Return the selected media quality."""
