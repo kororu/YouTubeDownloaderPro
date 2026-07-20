@@ -71,6 +71,28 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 
 ## Planificado
 
+### v1.0.x - Stability and bugfixes
+
+- Completar pruebas manuales de descargas, historial, archivos movidos/no encontrados, cookies, portable y defectos visuales menores.
+- Crear un commit estable del estado funcional antes de iniciar una mejora mayor.
+
+### v1.1.0 - Simple mode and compact queue
+
+**Backlog aprobado; no implementar todavía.** Será la próxima mejora mayor recomendada después de estabilizar `v1.0.x`.
+
+- Modo Simple con URL, MP4/MP3, mejor calidad automática, carpeta visible y acciones principales.
+- Cola minimalista con selección, nombre, formato, estado, porcentaje, barra de progreso y quitar.
+- Menos controles para usuarios no técnicos; ocultará rangos, calidad manual, opciones técnicas, cookies avanzadas, diagnóstico, log grande y archivos auxiliares.
+- Modo Avanzado conservará las opciones actuales para playlists, historial, diagnóstico y configuraciones especiales.
+
+### Orden posterior recomendado
+
+- `v1.2.0`: vista avanzada de cola y gestión masiva de playlists.
+- `v1.3.0`: flujo de playlists, rangos automáticos y recuperación.
+- `v1.4.0`: perfiles de descarga.
+- `v1.5.0`: evaluación de múltiples fuentes.
+- `v1.6.0`: automatización y scheduler.
+
 - `v0.4.0`: gestión avanzada de cola y playlists.
 - `v0.6.0`: mejora visual y de experiencia de usuario.
 - `v0.7.0`: historial completo y control de duplicados.
@@ -80,12 +102,12 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 
 El detalle vinculante del roadmap se mantiene en `PROJECT.md` y las tareas en `TODO.md`.
 
-## Sugerido para después de v1.0
+## Ideas posteriores a v1.6.0
 
-- `v1.1`: evaluar múltiples fuentes compatibles con `yt-dlp`.
-- `v1.2`: perfiles y ayuda específica por plataforma.
-- `v1.3`: programación y automatización.
-- `v1.4`: aplicación Android complementaria como control remoto.
+- Investigación de múltiples fuentes compatibles con `yt-dlp`.
+- Investigación de perfiles y ayuda específica por plataforma.
+- Investigación de automatización y programación.
+- Investigación de una aplicación Android complementaria como control remoto.
 - `v2.0`: evaluar una aplicación Android separada.
 
 Estas ideas no están implementadas ni garantizan compatibilidad con sitios concretos.

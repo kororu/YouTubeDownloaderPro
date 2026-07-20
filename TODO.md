@@ -106,28 +106,66 @@ Convenciones:
 - `[ ]` Incluir historial y control de duplicados.
 - `[ ]` Confirmar interfaz ordenada, legible y lista para compartir.
 
-## Futuras versiones después de v1.0
+## Backlog aprobado después de v1.0
 
-### v1.1 - Multi-source downloads
+### v1.0.x - Stability and bugfixes
+
+- `[~]` Consolidar historial, redescarga, archivo movido/no encontrado, progreso, cookies, portable y defectos visuales menores.
+- `[ ]` Crear un commit estable y completar pruebas manuales antes de iniciar `v1.1.0`.
+
+### v1.1.0 - Simple mode and compact queue
+
+> **No implementar todavía.** Mejora aprobada para después de estabilizar y commitear el estado `v1.0.x`.
+
+- `[ ]` Crear Modo Simple y conservar Modo Avanzado.
+- `[ ]` Mostrar URL, MP4/MP3, mejor calidad automática, carpeta destino y acciones principales de cola.
+- `[ ]` Ocultar calidad manual, rangos, opciones técnicas, cookies avanzadas, diagnóstico, log grande y archivos auxiliares.
+- `[ ]` Implementar cola minimalista: selección, nombre, formato, estado, porcentaje, barra compacta y quitar.
+- `[ ]` Usar textos no técnicos: “Mejor calidad automática”, “YouTube requiere verificación”, “Usar sesión del navegador” y “Ubicación del archivo”.
+- `[ ]` Mantener la vista avanzada para control por rango, historial, diagnósticos, formatos adicionales y configuraciones especiales.
+
+### v1.2.0 - Advanced playlist queue view
+
+- `[ ]` Extender tarjetas/lista, filtros por estado, orden por progreso/estado/nombre y selección masiva para playlists grandes.
+
+### v1.3.0 - Playlist workflow improvements
+
+- `[ ]` Mejorar bloques, reanudación, cola persistente, rangos automáticos y recuperación de descargas interrumpidas.
+
+### v1.4.0 - Download profiles
+
+- `[ ]` Añadir perfiles Música MP3, Video MP4, Playlist, Máxima calidad, Liviano y personalizados.
+
+### v1.5.0 - Multi-source downloads
+
+- `[?]` Evaluar fuentes externas compatibles con `yt-dlp`, detección de plataforma y mensajes de cookies o incompatibilidad.
+
+### v1.6.0 - Automation and scheduler
+
+- `[?]` Evaluar programación, inicio diferido, apagado al finalizar, cola persistente y tareas automáticas.
+
+## Ideas posteriores a v1.6.0
+
+### Multi-source research
 
 - `[?]` Evaluar Facebook, X/Twitter, TikTok, Vimeo, Instagram, SoundCloud, clips/VOD de Twitch y otras fuentes compatibles con `yt-dlp`.
 - `[?]` Detectar el origen de la URL.
 - `[?]` Advertir cuando un sitio requiera cookies o sesión.
 - `[?]` Documentar que el soporte depende de `yt-dlp` y puede cambiar.
 
-### v1.2 - Site profiles
+### Site-profile research
 
 - `[?]` Crear perfiles y opciones por plataforma.
 - `[?]` Añadir cookies opcionales, errores específicos y ayuda por fuente.
 
-### v1.3 - Scheduler and automation
+### Remote and Android research
 
 - `[?]` Programar horarios de descarga.
 - `[?]` Apagar el PC al finalizar.
 - `[?]` Ejecutar la cola al iniciar Windows de forma opcional.
 - `[?]` Añadir modo de bajo consumo.
 
-### v1.4 - Remote companion
+### Remote companion research
 
 - `[?]` Evaluar una app Android para controlar por WiFi/5G la cola ejecutada en el PC.
 - `[?]` Mantener inicialmente `yt-dlp` y FFmpeg en Windows, no dentro del teléfono.

@@ -158,21 +158,58 @@ Objetivo: entregar una aplicación Windows estable y lista para compartir.
 
 Estado: planificado; no representa la funcionalidad actual.
 
-## Futuras versiones después de v1.0
+## Roadmap posterior a v1.0
 
-### v1.1 - Multi-source downloads
+### v1.0.x - Stability and bugfixes
+
+Consolidar historial, redescargas cuando el archivo no existe, archivo movido/no encontrado, progreso, cookies, portable y defectos visuales menores. Esta etapa debe quedar commiteada y probada antes de iniciar una mejora mayor.
+
+### v1.1.0 - Simple mode and compact queue
+
+**Backlog aprobado; no implementar todavía.** Crear un Modo Simple para personas no técnicas y mantener el Modo Avanzado actual.
+
+- Modo Simple: URL, MP4/MP3, mejor calidad automática, carpeta de destino, acciones de agregar/descargar/quitar y cola minimalista con estado y progreso.
+- Ocultar calidad manual, rangos, cookies avanzadas, diagnóstico, log grande, metadata, subtítulos, miniaturas y plantillas.
+- Usar textos amigables como “Mejor calidad automática” y “YouTube requiere verificación”; no mostrar jerga interna.
+- La cola simple no reemplaza la vista avanzada: conserva selección, nombre, formato, estado, porcentaje, barra compacta y quitar.
+
+Flujo objetivo: pegar URL, elegir MP4 o MP3, cambiar carpeta si hace falta, agregar, descargar y ver el progreso.
+
+### v1.2.0 - Advanced playlist queue view
+
+Vista avanzada de tarjetas/lista, filtros por estado, orden por progreso/estado/nombre y selección masiva mejorada para playlists grandes.
+
+### v1.3.0 - Playlist workflow improvements
+
+Carga por bloques más cómoda, reanudación, cola persistente de playlist, rangos automáticos y recuperación de descargas interrumpidas.
+
+### v1.4.0 - Download profiles
+
+Perfiles Música MP3, Video MP4, Playlist, Máxima calidad, Liviano y perfiles personalizados.
+
+### v1.5.0 - Multi-source downloads
+
+Evaluar fuentes compatibles con `yt-dlp` como Facebook, X/Twitter, TikTok, Vimeo, Instagram, SoundCloud y Twitch; detectar plataforma y explicar incompatibilidades o necesidades de sesión.
+
+### v1.6.0 - Automation and scheduler
+
+Descargas programadas, inicio diferido de cola, apagado al finalizar, cola persistente y tareas automáticas.
+
+## Ideas posteriores a v1.6.0
+
+### Multi-source research
 
 Evaluar URLs de Facebook, X/Twitter, TikTok, Vimeo, Instagram, SoundCloud, clips/VOD de Twitch y otras fuentes compatibles con `yt-dlp`. La aplicación debería detectar el origen y avisar si se necesitan cookies o sesión. No se promete soporte absoluto: depende de `yt-dlp`, las condiciones de cada plataforma y sus cambios técnicos.
 
-### v1.2 - Site profiles
+### Site-profile research
 
 Perfiles y opciones por plataforma, cookies opcionales, detección de errores y mensajes de ayuda específicos por fuente.
 
-### v1.3 - Scheduler and automation
+### Remote and Android research
 
 Programación horaria, apagado al finalizar, inicio opcional de cola con Windows y modo de bajo consumo.
 
-### v1.4 - Remote companion
+### Remote companion research
 
 Evaluar una aplicación Android complementaria que controle por WiFi/5G el programa Windows. En una primera etapa, `yt-dlp` y FFmpeg continuarían ejecutándose en el PC.
 

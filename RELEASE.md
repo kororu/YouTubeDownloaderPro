@@ -77,6 +77,10 @@ El 2026-07-12 se completaron correctamente 35 pruebas con `unittest`, `compileal
 
 ## Alcance futuro
 
+La aplicación se mantiene en estabilización `v1.0.x`. La próxima mejora mayor aprobada es `v1.1.0 - Simple mode and compact queue`, pero no se debe implementar hasta crear un commit estable y completar las pruebas manuales actuales.
+
+El Modo Simple previsto priorizará URL, MP4/MP3, mejor calidad automática, carpeta de destino, acciones principales y una cola minimalista. El Modo Avanzado conservará los controles técnicos y de playlist existentes. Esta planificación no cambia la versión ni el alcance de la release actual.
+
 El roadmap hacia `v1.0.0` está en `PROJECT.md` y `TODO.md`. Formatos como WAV, historial completo, configuración avanzada y fuentes adicionales son planificados o sugeridos; no forman parte de la funcionalidad estable actual.
 
 ## Uso responsable

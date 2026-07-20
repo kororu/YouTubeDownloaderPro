@@ -48,6 +48,9 @@ Todos los cambios relevantes del proyecto se documentan en este archivo.
 
 ### Documentación
 
+- Aprobado el backlog futuro `v1.1.0 - Simple mode and compact queue`; es una propuesta de UX y no está implementada.
+- Reordenado el roadmap posterior a `v1.0.x`: modo simple primero, luego cola avanzada de playlists, flujo de playlists, perfiles, fuentes múltiples y automatización.
+
 - Documentado el estado real de `v0.3.0`, incluidas las mejoras presentes en el working tree y sus validaciones pendientes.
 - Incorporado el roadmap oficial desde `v0.3.0` hasta la versión estable `v1.0.0`.
 - Añadidas propuestas post-`v1.0` para fuentes adicionales compatibles con `yt-dlp`, perfiles por sitio, automatización, control remoto y evaluación de Android.

@@ -122,7 +122,25 @@ El alcance detallado está en [PROJECT.md](PROJECT.md) y [TODO.md](TODO.md).
 
 WAV está disponible mediante `yt-dlp` y FFmpeg desde `v0.5.0`. Produce archivos grandes y no recupera calidad perdida cuando la fuente original ya está comprimida. Solo evita una compresión adicional y resulta útil para edición. Para uso cotidiano, MP3, M4A u OPUS suelen ofrecer una mejor relación entre calidad y tamaño; para máxima calidad práctica se recomienda conservar `best audio` o elegir FLAC/WAV según la necesidad.
 
-## Futuras versiones después de v1.0
+## Próximo backlog aprobado
+
+La aplicación permanece en estabilización `v1.0.x`. Antes de una mejora mayor se debe crear un commit estable y completar las pruebas manuales pendientes.
+
+### v1.1.0 - Simple mode and compact queue
+
+**Planificado; no implementado.** Incorporará un Modo Simple para pegar una URL, elegir MP4 o MP3, usar la mejor calidad automática, cambiar carpeta, gestionar una cola minimalista y ver progreso. El Modo Avanzado conservará las opciones actuales para usuarios técnicos.
+
+La lista simple mostrará selección, nombre, formato, estado, porcentaje, barra compacta y quitar. Ocultará rangos, calidad manual, opciones técnicas, cookies avanzadas, diagnóstico, metadata, subtítulos, miniaturas y plantillas.
+
+### Orden recomendado
+
+- `v1.2.0`: vista avanzada de cola para playlists grandes.
+- `v1.3.0`: flujo de playlists, bloques y reanudación.
+- `v1.4.0`: perfiles de descarga.
+- `v1.5.0`: evaluación de fuentes adicionales compatibles con `yt-dlp`.
+- `v1.6.0`: automatización y programación.
+
+## Ideas posteriores a v1.6.0
 
 Se evaluará soporte para Facebook, X/Twitter, TikTok, Vimeo, Instagram, SoundCloud, clips/VOD de Twitch y otras fuentes compatibles con `yt-dlp`. El soporte dependerá de `yt-dlp`, de los cambios de cada sitio y, en algunos casos, de cookies o sesión; no se garantiza compatibilidad absoluta. También se estudiarán perfiles por plataforma, programación de descargas, control remoto desde Android y una posible aplicación Android separada.
 
