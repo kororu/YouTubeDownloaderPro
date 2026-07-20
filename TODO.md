@@ -94,6 +94,10 @@ Convenciones:
 
 ## v1.0.0 - Stable Windows release
 
+- `[x]` Preparar ejecutable onedir y paquete portable para Windows.
+- `[x]` Consolidar documentación y checklist de release estable.
+- `[ ]` Ejecutar matriz manual de descargas reales y PC limpio antes de distribución pública.
+
 - `[ ]` Publicar ejecutable y portable estables.
 - `[ ]` Completar documentación y changelog.
 - `[ ]` Confirmar manejo robusto de errores y descargas silenciosas.

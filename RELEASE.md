@@ -3,7 +3,7 @@
 ## Estado de versión
 
 - Producto: YouTube Downloader Pro.
-- Versión visible actual: `0.9.0`.
+- Versión visible actual: `1.0.0`.
 - Plataforma: Windows.
 - Formato: ejecutable PyInstaller `onedir` y paquete portable.
 - Estado: mejoras de `v0.6.0` presentes en el working tree; release pendiente de validación manual completa.

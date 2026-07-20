@@ -4,7 +4,7 @@
 
 - Proyecto: YouTube Downloader Pro.
 - Autor: Ariel Ponce.
-- Versión visible actual: `v0.9.0`.
+- Versión visible actual: `v1.0.0`.
 - Plataforma objetivo: Windows.
 - Stack: Python 3.12+, PySide6, QThread, `subprocess`, `yt-dlp`, `ffmpeg`, JSON, QSS y PyInstaller.
 - Distribución: ejecutable PyInstaller `onedir` y paquete portable.
@@ -32,7 +32,7 @@
 - Scripts `scripts\build_windows.ps1` y `scripts\package_portable.ps1`.
 - Launcher `run_app.bat` y guía `README_INSTALL.txt` para el portable.
 
-## En progreso en v0.9.0
+## Estado estable v1.0.0
 
 Las siguientes mejoras están implementadas en el working tree, pero siguen pendientes de validación manual completa y de su proceso normal de commit/release:
 
@@ -52,7 +52,7 @@ Las siguientes mejoras están implementadas en el working tree, pero siguen pend
 - Fondo cover adaptable con opacidad persistente, paneles semitransparentes y modo compacto.
 - Estados vacíos, tooltips, atajos básicos, contadores de cola y acciones de copiar/limpiar registro.
 - Historial de descargas JSON, diálogo de consulta y control de duplicados/redescargas.
-- Release candidate con build onedir, portable documentado y checklist de pruebas antes de v1.0.0.
+- Build onedir, portable documentado y checklist de validación para Windows.
 
 ## Pendiente de verificación
 
@@ -142,7 +142,7 @@ git diff --stat
 
 ## Próximo paso recomendado
 
-Completar la matriz de pruebas manuales de `v0.6.0`: verificar toolbar, fondo, opacidad, modo compacto, cola, log, atajos y el paquete portable, además de las descargas reales pendientes. Corregir solo los defectos confirmados antes de etiquetar o publicar la versión.
+Completar las pruebas manuales de medios reales y del portable en un PC Windows limpio antes de distribuir públicamente la build estable.
 
 ## Validaciones automáticas realizadas
 

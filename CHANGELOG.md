@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.0 - Stable Windows release
+
+- Finalizado el ciclo de estabilización, build PyInstaller onedir y paquete portable para Windows.
+- Consolidada la documentación de instalación, dependencias, diagnóstico y pruebas de release.
+
 ## v0.9.0 - 2026-07-20
 
 - Preparado build onedir, portable limpio, documentación de usuario y checklist de release candidate.

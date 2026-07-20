@@ -59,7 +59,7 @@ Puede cambiar esa carpeta desde Ajustes.
 Estado de esta version
 ----------------------
 
-La version visible es v0.9.0 release candidate. Antes de distribuir este paquete, se recomienda
+La version visible es v1.0.0. Antes de distribuir este paquete, se recomienda
 probar descargas MP4 y MP3, playlists por rangos, YouTube Mix, la opcion
 "Cargar siguientes" y la ausencia de ventanas emergentes de yt-dlp/ffmpeg.
 Tambien se deben probar MP3, M4A, OPUS, FLAC, WAV, audio original,
