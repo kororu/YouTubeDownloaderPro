@@ -16,6 +16,9 @@ class HistoryDialog(QDialog):
     """Searchable history dialog with local file actions."""
 
     retry_requested: Signal = Signal(object)
+    locate_file_requested: Signal = Signal(object)
+    remove_requested: Signal = Signal(object)
+    clear_missing_requested: Signal = Signal()
 
     def __init__(self, items: tuple[DownloadHistoryItem, ...], parent: QWidget | None = None) -> None:
         """Initialize dialog with current history records."""
@@ -30,7 +33,15 @@ class HistoryDialog(QDialog):
         layout.addWidget(self._search)
         layout.addWidget(self._list, 1)
         actions = QHBoxLayout()
-        for text, handler in (("Reintentar", self._retry), ("Abrir carpeta", self._open_folder), ("Copiar ruta", self._copy_path), ("Copiar URL", self._copy_url)):
+        for text, handler in (
+            ("Redescargar", self._retry),
+            ("Buscar archivo", self._locate_file),
+            ("Quitar del historial", self._remove),
+            ("Limpiar no encontrados", self._clear_missing),
+            ("Abrir carpeta", self._open_folder),
+            ("Copiar ruta", self._copy_path),
+            ("Copiar URL", self._copy_url),
+        ):
             button = QPushButton(text, self)
             button.clicked.connect(handler)
             actions.addWidget(button)
@@ -64,6 +75,22 @@ class HistoryDialog(QDialog):
         item = self._selected()
         if item is not None:
             self.retry_requested.emit(item)
+
+    def _locate_file(self) -> None:
+        """Request a moved output file for the selected history entry."""
+        item = self._selected()
+        if item is not None:
+            self.locate_file_requested.emit(item)
+
+    def _remove(self) -> None:
+        """Request removal of the selected history entry only."""
+        item = self._selected()
+        if item is not None:
+            self.remove_requested.emit(item)
+
+    def _clear_missing(self) -> None:
+        """Request removal of all completed records without an output file."""
+        self.clear_missing_requested.emit()
 
     def _open_folder(self) -> None:
         """Open the output folder when it still exists."""

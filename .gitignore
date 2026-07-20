@@ -49,6 +49,10 @@ logs/
 .env
 .env.*
 !.env.example
+cookies.txt
+*.cookies.txt
+cookies/
+*.cookies
 
 # VS Code
 .vscode/

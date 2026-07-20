@@ -82,6 +82,12 @@ class SettingsTestCase(unittest.TestCase):
 
         self.assertEqual(settings.filename_template, "%(title)s.%(ext)s")
 
+    def test_queue_view_mode_is_persisted_with_safe_default(self) -> None:
+        """Queue rendering preference accepts only supported view modes."""
+        self.assertEqual(Settings.from_dict({}).queue_view_mode, "cards")
+        self.assertEqual(Settings.from_dict({"queue_view_mode": "list"}).queue_view_mode, "list")
+        self.assertEqual(Settings.from_dict({"queue_view_mode": "table"}).queue_view_mode, "cards")
+
 
 if __name__ == "__main__":
     unittest.main()

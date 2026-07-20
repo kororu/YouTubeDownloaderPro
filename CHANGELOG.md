@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.0.4 - Dual queue view
+
+- Añadida una vista de lista compacta para seleccionar y gestionar playlists o colas grandes.
+- Mantenida la vista detallada de tarjetas y sincronizada la selección, el estado y el progreso entre ambas vistas.
+- Persistida la preferencia `Tarjetas` o `Lista` entre sesiones.
+
+## v1.0.3 - Download history validation before metadata loading
+
+- La cola consulta el historial local por ID de YouTube y URL antes de iniciar `yt-dlp`.
+- Los archivos existentes se muestran como `Ya descargado` sin cargar metadata ni mostrar un bot-check.
+- Las rutas ausentes o incompletas permiten redescarga y las descargas nuevas guardan la ruta final reportada por `yt-dlp`.
+
+## v1.0.2 - History file validation and YouTube bot-check fixes
+
+- La prevención de redescargas ahora exige que el archivo registrado aún exista.
+- Mejorado el mensaje para el desafío anti-bot de YouTube y protegidas rutas de cookies locales.
+
+## v1.0.1 - Progress bar and YouTube cookie handling
+
+- Añadida barra de progreso visual por elemento y mensaje amigable ante el control anti-bot de YouTube.
+
 ## v1.0.0 - Stable Windows release
 
 - Finalizado el ciclo de estabilización, build PyInstaller onedir y paquete portable para Windows.

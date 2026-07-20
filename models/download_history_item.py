@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any
 
+from core.url_identity import extract_youtube_video_id
 from models.download_item import DownloadItem
 
 
@@ -67,8 +68,13 @@ class DownloadHistoryItem:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "DownloadHistoryItem":
-        """Deserialize a validated history record."""
+        """Deserialize a validated history record with legacy video ID recovery."""
         required = ("history_id", "title", "url", "normalized_url", "source_url", "output_folder", "output_format", "quality", "status", "downloaded_at")
         if not all(isinstance(data.get(key), str) and data[key] for key in required):
             raise ValueError("Invalid history record")
-        return cls(**{field: data.get(field) for field in cls.__dataclass_fields__})
+        values = {field: data.get(field) for field in cls.__dataclass_fields__}
+        if not isinstance(values["video_id"], str) or not values["video_id"].strip():
+            values["video_id"] = extract_youtube_video_id(values["source_url"]) or extract_youtube_video_id(
+                values["url"]
+            )
+        return cls(**values)

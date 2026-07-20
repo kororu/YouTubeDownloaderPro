@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from uuid import uuid4
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
-from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QSplitter, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QSplitter, QVBoxLayout, QWidget
 
 from config.app_config import AppConfig
 from config.settings import Settings
@@ -225,6 +225,7 @@ class MainWindow(QMainWindow):
         )
         self._queue_widget = QueueWidget(central_widget)
         self._queue_widget.set_compact_mode(self._settings.compact_mode)
+        self._queue_widget.set_view_mode(self._settings.queue_view_mode)
         self._log_widget = LogWidget(central_widget)
         self._status_widget = StatusWidget(central_widget)
         self._settings_widget = SettingsWidget(self._settings, central_widget)
@@ -277,6 +278,7 @@ class MainWindow(QMainWindow):
         self._toolbar_widget.queue_search_changed.connect(self._queue_widget.set_search_text)
         self._toolbar_widget.queue_sort_changed.connect(self._queue_widget.set_sort_mode)
         self._queue_widget.queue_changed.connect(self._handle_queue_changed)
+        self._queue_widget.view_mode_changed.connect(self._save_queue_view_mode)
         self._settings_widget.settings_changed.connect(self._save_settings)
         self._settings_widget.settings_warning.connect(self._show_settings_warning)
         self._log_widget.export_requested.connect(self._export_logs)
@@ -284,10 +286,17 @@ class MainWindow(QMainWindow):
         self._report_dependency_status()
         self._download_queue_service.item_changed.connect(self._handle_download_item_changed)
         self._download_queue_service.progress_changed.connect(self._handle_download_progress)
+        self._download_queue_service.download_completed.connect(self._handle_download_completed)
         self._download_queue_service.log_received.connect(self._handle_download_log)
         self._download_queue_service.queue_finished.connect(self._handle_download_queue_finished)
 
-    def _add_video_to_queue(self, source_url: str, media_format: str, quality: str) -> None:
+    def _add_video_to_queue(
+        self,
+        source_url: str,
+        media_format: str,
+        quality: str,
+        force_redownload: bool = False,
+    ) -> None:
         """Validate a video URL and load metadata."""
         validation_result: UrlValidationResult = self._url_validator.validate(source_url)
         if not validation_result.is_valid or validation_result.normalized_url is None:
@@ -305,10 +314,48 @@ class MainWindow(QMainWindow):
         if self._settings.prevent_queue_duplicates and download_item.duplicate_key() in self._queue_duplicate_keys():
             self._show_input_error("Este video ya está en la cola.")
             return
-        if self._download_history_service.is_completed(download_item.duplicate_key()):
-            if self._settings.warn_already_downloaded:
+        history_entry = self._log_history_debug(
+            source_url,
+            validation_result.normalized_url,
+            force_redownload,
+        )
+        if history_entry is not None:
+            file_available = self._download_history_service.is_completed_download_available(history_entry)
+            if file_available and not force_redownload:
+                completed_item = self._create_completed_history_item(download_item, history_entry)
+                self._queue_widget.add_download_item(completed_item)
+                self._download_queue_service.add_items((completed_item,))
+                self._persist_queue()
+                self._log_widget.append_info(
+                    f"Este video ya fue descargado anteriormente y el archivo existe: {history_entry.title}"
+                )
+                self._status_widget.set_status_message("video ya descargado")
+                return
+            if not file_available and history_entry.output_path:
+                self._log_widget.append_warning(
+                    "Descargado antes, pero archivo no encontrado. Se permitirá redescargar."
+                )
+            elif not file_available:
+                self._log_widget.append_warning(
+                    "El historial de este video no incluye una ruta de archivo válida. Se permitirá descargar nuevamente."
+                )
+            elif force_redownload:
+                self._log_widget.append_info("Redescarga solicitada manualmente para un video ya descargado.")
+            elif self._settings.warn_already_downloaded:
+                self._log_widget.append_warning(
+                    "Este video ya fue descargado anteriormente. La redescarga manual está permitida por ajustes."
+                )
+        if history_entry is None and self._download_history_service.is_completed(download_item.duplicate_key()):
+            file_available: bool = self._download_history_service.is_completed_file_available(
+                download_item.duplicate_key()
+            )
+            if not file_available:
+                self._log_widget.append_warning(
+                    "Este video fue descargado antes, pero el archivo ya no existe. Se permitirá descargar nuevamente."
+                )
+            elif self._settings.warn_already_downloaded:
                 self._log_widget.append_warning("Este video ya fue descargado anteriormente.")
-            if not self._settings.allow_redownload_completed:
+            if file_available and not self._settings.allow_redownload_completed:
                 self._status_widget.set_status_message("video ya descargado")
                 return
 
@@ -317,6 +364,83 @@ class MainWindow(QMainWindow):
         self._log_widget.append_info(f"Cargando metadatos: {download_item.source_url}")
         self._status_widget.set_status_message("cargando metadatos")
         self._start_metadata_worker(download_item)
+
+    def _log_history_debug(
+        self,
+        received_url: str,
+        normalized_url: str,
+        force_redownload: bool,
+    ) -> DownloadHistoryItem | None:
+        """Log local history lookup evidence before metadata loading begins."""
+        video_id = self._url_validator.extract_youtube_video_id(normalized_url)
+        history_entries = self._download_history_service.load()
+        video_id_match = (
+            self._download_history_service.find_by_video_id(video_id) if video_id is not None else None
+        )
+        normalized_url_match = self._download_history_service.find_by_normalized_url(normalized_url)
+        original_url_match = self._download_history_service.find_by_original_url(received_url)
+        matched_entry = video_id_match or normalized_url_match or original_url_match
+        output_exists = (
+            self._download_history_service.is_completed_download_available(matched_entry)
+            if matched_entry is not None
+            else False
+        )
+        if matched_entry is not None and output_exists and not force_redownload:
+            decision = "skip yt-dlp"
+        elif matched_entry is not None:
+            decision = "allow redownload"
+        else:
+            decision = "load metadata"
+
+        self._log_widget.append_info(f"[HistoryDebug] URL received: {received_url}")
+        self._log_widget.append_info(f"[HistoryDebug] Extracted video_id: {video_id or 'none'}")
+        self._log_widget.append_info(
+            f"[HistoryDebug] Normalized URL: {self._url_validator.normalize_for_comparison(normalized_url)}"
+        )
+        self._log_widget.append_info(
+            f"[HistoryDebug] History file path: {self._download_history_service._history_path}"
+        )
+        self._log_widget.append_info(f"[HistoryDebug] History entries loaded: {len(history_entries)}")
+        self._log_widget.append_info(
+            f"[HistoryDebug] Match by video_id: {'yes' if video_id_match is not None else 'no'}"
+        )
+        self._log_widget.append_info(
+            f"[HistoryDebug] Match by normalized_url: {'yes' if normalized_url_match is not None else 'no'}"
+        )
+        self._log_widget.append_info(
+            f"[HistoryDebug] Match by original_url: {'yes' if original_url_match is not None else 'no'}"
+        )
+        self._log_widget.append_info(
+            f"[HistoryDebug] Matched entry status: {matched_entry.status if matched_entry else 'none'}"
+        )
+        self._log_widget.append_info(
+            f"[HistoryDebug] Matched entry output_path: {matched_entry.output_path if matched_entry and matched_entry.output_path else 'none'}"
+        )
+        self._log_widget.append_info(f"[HistoryDebug] Output path exists: {'yes' if output_exists else 'no'}")
+        self._log_widget.append_info(f"[HistoryDebug] Decision: {decision}")
+        return matched_entry
+
+    def _create_completed_history_item(
+        self,
+        download_item: DownloadItem,
+        history_entry: DownloadHistoryItem,
+    ) -> DownloadItem:
+        """Create a completed queue item from a local history record."""
+        metadata = VideoMetadata(
+            source_url=download_item.source_url,
+            title=history_entry.title,
+            duration_seconds=history_entry.duration,
+            uploader=history_entry.channel,
+            thumbnail_url=None,
+            webpage_url=download_item.source_url,
+        )
+        return replace(
+            download_item,
+            status=DownloadStatus.COMPLETED,
+            metadata=metadata,
+            progress_percentage=100.0,
+            video_id=history_entry.video_id or self._url_validator.extract_youtube_video_id(download_item.source_url),
+        )
 
     def _add_playlist_to_queue(
         self,
@@ -402,6 +526,12 @@ class MainWindow(QMainWindow):
         )
         if self._active_playlist_loads == 0:
             self._persist_queue()
+
+    def _save_queue_view_mode(self, view_mode: str) -> None:
+        """Persist the selected queue renderer without changing other settings."""
+        updated_settings = self._settings.with_queue_view_mode(view_mode)
+        self._settings_manager.save(updated_settings)
+        self._settings = updated_settings
 
     def _restore_persisted_queue(self) -> None:
         """Restore queue items persisted from a previous session."""
@@ -721,7 +851,7 @@ class MainWindow(QMainWindow):
             return
         self._queue_widget.update_download_item(item)
         self._persist_queue()
-        if item.status in {DownloadStatus.COMPLETED, DownloadStatus.FAILED}:
+        if item.status is DownloadStatus.FAILED:
             history_item = DownloadHistoryItem.from_download_item(item, self._settings.output_folder)
             self._download_history_service.record(history_item)
         if item.status is DownloadStatus.FAILED and item.error_message:
@@ -732,6 +862,17 @@ class MainWindow(QMainWindow):
         if not isinstance(progress, DownloadProgress):
             return
         self._status_widget.set_progress(progress.percentage)
+
+    def _handle_download_completed(self, item: object, output_path: str) -> None:
+        """Persist a completed download with the output path reported by yt-dlp."""
+        if not isinstance(item, DownloadItem):
+            return
+        history_item = DownloadHistoryItem.from_download_item(
+            item,
+            self._settings.output_folder,
+            output_path or None,
+        )
+        self._download_history_service.record(history_item)
 
     def _handle_download_log(self, item_id: str, message: str) -> None:
         """Display download worker log lines."""
@@ -835,6 +976,17 @@ class MainWindow(QMainWindow):
             return "No se encontraron videos seleccionables en la playlist."
         if "timed out" in normalized_message:
             return "La operación tardó demasiado. Verifique la conexión e inténtelo nuevamente."
+        if (
+            "confirm you're not a bot" in normalized_message
+            or "confirm you’re not a bot" in normalized_message
+            or "cookies-from-browser" in normalized_message
+            or "use --cookies" in normalized_message
+            or "exporting youtube cookies" in normalized_message
+            or "could not copy chrome cookie database" in normalized_message
+            or "failed to decrypt with dpapi" in normalized_message
+            or "authentication" in normalized_message
+        ):
+            return "YouTube requiere iniciar sesión o verificar que no eres un bot. Puedes activar cookies del navegador en Ajustes."
         return error_message
 
     def _save_settings(self, settings: Settings) -> None:
@@ -879,6 +1031,9 @@ class MainWindow(QMainWindow):
         """Open the searchable local download history."""
         dialog = HistoryDialog(self._download_history_service.load(), self)
         dialog.retry_requested.connect(self._retry_history_item)
+        dialog.locate_file_requested.connect(self._locate_history_file)
+        dialog.remove_requested.connect(self._remove_history_item)
+        dialog.clear_missing_requested.connect(self._clear_missing_history_entries)
         dialog.exec()
 
     def _show_diagnostics_dialog(self) -> None:
@@ -896,7 +1051,77 @@ class MainWindow(QMainWindow):
         """Add a history entry back to the queue using its stored URL."""
         if not isinstance(history_item, DownloadHistoryItem):
             return
-        self._add_video_to_queue(history_item.source_url, "mp4" if history_item.output_format == "video" else (history_item.audio_format or "mp3"), history_item.quality)
+        if (
+            self._download_history_service.is_completed_download_available(history_item)
+            and not self._settings.allow_redownload_completed
+        ):
+            self._show_input_error("La redescarga de videos completados está desactivada en ajustes.")
+            return
+        self._add_video_to_queue(
+            history_item.source_url,
+            "mp4" if history_item.output_format == "video" else (history_item.audio_format or "mp3"),
+            history_item.quality,
+            force_redownload=True,
+        )
+
+    def _locate_history_file(self, history_item: object) -> None:
+        """Associate a moved local file with a completed history entry."""
+        if not isinstance(history_item, DownloadHistoryItem):
+            return
+        selected_path, _selected_filter = QFileDialog.getOpenFileName(
+            self,
+            "Buscar archivo descargado",
+            history_item.output_folder,
+            "Media files (*.*)",
+        )
+        if not selected_path:
+            return
+        selected_file = Path(selected_path)
+        if not selected_file.is_file():
+            self._show_input_error("El archivo seleccionado ya no está disponible.")
+            return
+        self._download_history_service.record(replace(history_item, output_path=str(selected_file)))
+        self._log_widget.append_info(f"Archivo asociado al historial: {selected_file.name}")
+        self._status_widget.set_status_message("archivo de historial actualizado")
+
+    def _remove_history_item(self, history_item: object) -> None:
+        """Remove one selected history entry after explicit confirmation."""
+        if not isinstance(history_item, DownloadHistoryItem):
+            return
+        confirmation = QMessageBox.question(
+            self,
+            "Quitar del historial",
+            "Se eliminará solo la entrada del historial. El archivo del disco no será borrado. ¿Continuar?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if confirmation != QMessageBox.StandardButton.Yes:
+            return
+        if self._download_history_service.remove(history_item.history_id):
+            self._log_widget.append_info("Entrada eliminada del historial. No se eliminó ningún archivo.")
+            self._status_widget.set_status_message("entrada eliminada del historial")
+
+    def _clear_missing_history_entries(self) -> None:
+        """Remove completed history entries whose output file is unavailable after confirmation."""
+        missing_entries = self._download_history_service.completed_entries_without_available_file()
+        if not missing_entries:
+            self._log_widget.append_info("No hay entradas completadas con archivos no encontrados.")
+            self._status_widget.set_status_message("historial sin archivos faltantes")
+            return
+        confirmation = QMessageBox.question(
+            self,
+            "Limpiar historial",
+            f"Se eliminarán {len(missing_entries)} entradas del historial. No se borrarán archivos del disco. ¿Continuar?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if confirmation != QMessageBox.StandardButton.Yes:
+            return
+        removed_count = self._download_history_service.remove_completed_entries_without_available_file()
+        self._log_widget.append_info(
+            f"Historial limpiado: {removed_count} entradas sin archivo fueron eliminadas."
+        )
+        self._status_widget.set_status_message("historial limpiado")
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Persist window geometry before closing.

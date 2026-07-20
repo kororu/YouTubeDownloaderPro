@@ -5,9 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import Any, TypeVar
-from urllib.parse import parse_qs, parse_qsl, urlencode, urlparse, urlunparse
 from uuid import uuid4
 
+from core.url_identity import extract_youtube_video_id, normalize_url_for_comparison
 from models.download_enums import AudioQuality, DownloadFormat, DownloadQuality, DownloadStatus
 from models.video_metadata import VideoMetadata
 
@@ -136,10 +136,10 @@ class DownloadItem:
         """Return a stable key used to avoid duplicate queue entries."""
         if self.video_id:
             return f"video:{self.video_id}"
-        video_id: str | None = _read_video_id_from_url(self.source_url)
+        video_id: str | None = extract_youtube_video_id(self.source_url)
         if video_id is not None:
             return f"video:{video_id}"
-        return f"url:{_normalize_url_for_comparison(self.source_url)}"
+        return f"url:{normalize_url_for_comparison(self.source_url)}"
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the item to JSON-serializable data.
@@ -309,35 +309,3 @@ def _read_enum(
         return enum_type(value)
     except ValueError:
         return default
-
-
-def _read_video_id_from_url(source_url: str) -> str | None:
-    """Read a YouTube video identifier from a URL when present."""
-    parsed_url = urlparse(source_url)
-    host: str = parsed_url.netloc.lower()
-    if "youtu.be" in host:
-        video_id: str = parsed_url.path.strip("/")
-        return video_id or None
-    if "youtube.com" in host:
-        query_values: dict[str, list[str]] = parse_qs(parsed_url.query)
-        video_values: list[str] = query_values.get("v", [])
-        if video_values and video_values[0].strip():
-            return video_values[0].strip()
-    return None
-
-
-def _normalize_url_for_comparison(source_url: str) -> str:
-    """Normalize a URL for stable duplicate comparison."""
-    parsed_url = urlparse(source_url.strip())
-    normalized_query: str = urlencode(sorted(parse_qsl(parsed_url.query, keep_blank_values=True)))
-    normalized_path: str = parsed_url.path.rstrip("/") or "/"
-    return urlunparse(
-        (
-            parsed_url.scheme.lower(),
-            parsed_url.netloc.lower(),
-            normalized_path,
-            parsed_url.params,
-            normalized_query,
-            "",
-        )
-    )

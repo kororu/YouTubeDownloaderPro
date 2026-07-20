@@ -4,7 +4,7 @@
 
 - Proyecto: YouTube Downloader Pro.
 - Autor: Ariel Ponce.
-- Versión visible actual: `v1.0.0`.
+- Versión visible actual: `v1.0.4`.
 - Plataforma objetivo: Windows.
 - Stack: Python 3.12+, PySide6, QThread, `subprocess`, `yt-dlp`, `ffmpeg`, JSON, QSS y PyInstaller.
 - Distribución: ejecutable PyInstaller `onedir` y paquete portable.
@@ -17,6 +17,7 @@
 - Aplicación Windows con `QMainWindow` y tema dark permanente.
 - Imagen de fondo opcional con escalado tipo cover.
 - Cola basada en `QScrollArea` y `QueueItemWidget`.
+- Vista dual de cola: tarjetas detalladas y lista compacta para playlists grandes.
 - `LogWidget` con exportación, `StatusWidget`, `SettingsWidget`, footer y `AboutDialog`.
 - Video MP4 y audio MP3, M4A, OPUS, FLAC, WAV y audio original/best audio.
 - Calidad de video hasta 2160p y bitrates MP3 best, 128, 192, 256 y 320 kbps.

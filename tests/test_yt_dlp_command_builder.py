@@ -58,6 +58,18 @@ class YtDlpCommandBuilderTestCase(unittest.TestCase):
         self.assertIn("--audio-format", command)
         self.assertIn("mp3", command)
 
+    def test_download_command_reports_final_output_path(self) -> None:
+        """Downloads request the final path used for local history validation."""
+        command: list[str] = self.builder.build_download_command(
+            "https://example.com/video",
+            "%(title)s.%(ext)s",
+            DownloadFormat.MP4,
+            DownloadQuality.BEST,
+        )
+
+        self.assertIn("--print", command)
+        self.assertIn("after_move:__OUTPUT_PATH__%(filepath)s", command)
+
     def test_mp3_command_applies_selected_bitrate(self) -> None:
         """MP3 conversion passes the requested bitrate to yt-dlp."""
         command: list[str] = self.builder.build_download_command(

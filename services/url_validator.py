@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from urllib.parse import parse_qs, urlparse
 
+from core.url_identity import extract_youtube_video_id, normalize_url_for_comparison
+
 
 @dataclass(frozen=True, slots=True)
 class UrlValidationResult:
@@ -56,3 +58,13 @@ class UrlValidator:
         has_radio_parameter: bool = query_parameters.get("start_radio", ["0"])[0] == "1"
         has_radio_list: bool = any(value.startswith("RD") for value in list_values)
         return has_radio_parameter or has_radio_list
+
+    @staticmethod
+    def extract_youtube_video_id(source_url: str) -> str | None:
+        """Extract a YouTube video identifier without invoking yt-dlp."""
+        return extract_youtube_video_id(source_url)
+
+    @staticmethod
+    def normalize_for_comparison(source_url: str) -> str:
+        """Normalize a URL for local identity comparisons."""
+        return normalize_url_for_comparison(source_url)

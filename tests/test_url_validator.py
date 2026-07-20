@@ -45,6 +45,18 @@ class UrlValidatorTestCase(unittest.TestCase):
             self.validator.is_youtube_mix_url("https://www.youtube.com/playlist?list=PLabc123")
         )
 
+    def test_extracts_video_id_from_common_youtube_urls(self) -> None:
+        """Video identity is available without calling yt-dlp."""
+        urls = (
+            "https://www.youtube.com/watch?v=video123&si=tracking&list=PL123",
+            "https://youtu.be/video123?si=tracking&t=2",
+            "https://youtube.com/shorts/video123?start_radio=1",
+        )
+
+        for source_url in urls:
+            with self.subTest(source_url=source_url):
+                self.assertEqual(self.validator.extract_youtube_video_id(source_url), "video123")
+
 
 if __name__ == "__main__":
     unittest.main()

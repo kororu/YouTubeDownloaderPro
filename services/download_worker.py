@@ -21,7 +21,7 @@ class DownloadWorker(QThread):
 
     progress_changed: Signal = Signal(str, object)
     log_received: Signal = Signal(str, str)
-    download_completed: Signal = Signal(str)
+    download_completed: Signal = Signal(str, str)
     download_failed: Signal = Signal(str, str)
     download_cancelled: Signal = Signal(str)
 
@@ -52,6 +52,7 @@ class DownloadWorker(QThread):
         self._output_template_builder: OutputTemplateBuilder = output_template_builder or OutputTemplateBuilder()
         self._process: subprocess.Popen[str] | None = None
         self._cancel_requested: bool = False
+        self._output_path: str = ""
 
     @property
     def item_id(self) -> str:
@@ -108,6 +109,8 @@ class DownloadWorker(QThread):
                     break
                 stripped_line: str = line.rstrip()
                 if stripped_line:
+                    if self._read_output_path(stripped_line):
+                        continue
                     self.log_received.emit(self.item_id, stripped_line)
                     if self._subtitles_unavailable(stripped_line):
                         self.log_received.emit(self.item_id, "Subtitles not available")
@@ -120,7 +123,7 @@ class DownloadWorker(QThread):
             self.download_cancelled.emit(self.item_id)
             return
         if return_code == 0:
-            self.download_completed.emit(self.item_id)
+            self.download_completed.emit(self.item_id, self._output_path)
             return
         self.download_failed.emit(self.item_id, f"yt-dlp exited with code {return_code}.")
 
@@ -129,3 +132,11 @@ class DownloadWorker(QThread):
         """Return whether yt-dlp reports that subtitles are unavailable."""
         normalized_line: str = log_line.lower()
         return "no subtitles" in normalized_line or "does not have subtitles" in normalized_line
+
+    def _read_output_path(self, log_line: str) -> bool:
+        """Capture the final yt-dlp output path without displaying the marker."""
+        marker = "__OUTPUT_PATH__"
+        if not log_line.startswith(marker):
+            return False
+        self._output_path = log_line.removeprefix(marker).strip()
+        return True

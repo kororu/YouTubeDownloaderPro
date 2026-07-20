@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QCheckBox, QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QCheckBox, QFrame, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
 from models.download_enums import DownloadStatus
 from models.download_item import DownloadItem
@@ -110,6 +110,7 @@ class QueueItemWidget(QFrame):
         self._url_label: QLabel
         self._metadata_label: QLabel
         self._progress_label: QLabel
+        self._progress_bar: QProgressBar
         self._error_label: QLabel
         self._layout: QHBoxLayout
         self.setObjectName("queueItemWidget")
@@ -261,6 +262,11 @@ class QueueItemWidget(QFrame):
         self._progress_label = QLabel(self)
         self._progress_label.setObjectName("queueItemProgress")
 
+        self._progress_bar = QProgressBar(self)
+        self._progress_bar.setObjectName("queueItemProgressBar")
+        self._progress_bar.setRange(0, 100)
+        self._progress_bar.setTextVisible(True)
+
         self._error_label = QLabel(self)
         self._error_label.setObjectName("queueItemError")
         self._error_label.setWordWrap(True)
@@ -269,6 +275,7 @@ class QueueItemWidget(QFrame):
         text_layout.addWidget(self._url_label)
         text_layout.addWidget(self._metadata_label)
         text_layout.addWidget(self._progress_label)
+        text_layout.addWidget(self._progress_bar)
         text_layout.addWidget(self._error_label)
 
         remove_button: QPushButton = QPushButton("Quitar", self)
@@ -306,10 +313,21 @@ class QueueItemWidget(QFrame):
         if self._item_data.playlist_index is not None:
             origin_label: str = "Mix" if self._item_data.is_youtube_mix else "Playlist"
             metadata_parts.append(f"{origin_label}: #{self._item_data.playlist_index}")
-        if self._item_data.status == "Completado":
+        if self._item_data.status == "Ya descargado":
             metadata_parts.append("Descargado")
         self._metadata_label.setText(" | ".join(metadata_parts))
-        self._progress_label.setText(f"Progreso: {self._item_data.progress_percentage:.1f}%")
+        status: str = self._item_data.status
+        if status == "Cargando metadatos":
+            self._progress_bar.setRange(0, 0)
+            self._progress_label.setText("Cargando metadata...")
+        else:
+            self._progress_bar.setRange(0, 100)
+            percentage: int = 100 if status == "Ya descargado" else round(self._item_data.progress_percentage)
+            self._progress_bar.setValue(percentage)
+            self._progress_label.setText(f"Progreso: {percentage}%")
+        self._progress_bar.setProperty("downloadState", status)
+        self._progress_bar.style().unpolish(self._progress_bar)
+        self._progress_bar.style().polish(self._progress_bar)
         error_message: str = self._item_data.error_message or ""
         self._error_label.setText(error_message)
         self._error_label.setVisible(bool(error_message))
@@ -323,7 +341,7 @@ def _translate_status(status: DownloadStatus) -> str:
         DownloadStatus.READY: "Listo",
         DownloadStatus.QUEUED: "En cola",
         DownloadStatus.DOWNLOADING: "Descargando",
-        DownloadStatus.COMPLETED: "Completado",
+        DownloadStatus.COMPLETED: "Ya descargado",
         DownloadStatus.CANCELLED: "Cancelado",
         DownloadStatus.FAILED: "Error",
     }
@@ -338,6 +356,7 @@ def _status_from_label(status_label: str) -> DownloadStatus:
         "Listo": DownloadStatus.READY,
         "En cola": DownloadStatus.QUEUED,
         "Descargando": DownloadStatus.DOWNLOADING,
+        "Ya descargado": DownloadStatus.COMPLETED,
         "Completado": DownloadStatus.COMPLETED,
         "Cancelado": DownloadStatus.CANCELLED,
         "Error": DownloadStatus.FAILED,

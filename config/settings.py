@@ -46,6 +46,7 @@ class Settings:
     background_image_path: str
     background_opacity: float
     compact_mode: bool
+    queue_view_mode: str
     prevent_queue_duplicates: bool
     warn_already_downloaded: bool
     allow_redownload_completed: bool
@@ -96,9 +97,10 @@ class Settings:
             background_image_path="",
             background_opacity=0.28,
             compact_mode=False,
+            queue_view_mode="cards",
             prevent_queue_duplicates=True,
             warn_already_downloaded=True,
-            allow_redownload_completed=False,
+            allow_redownload_completed=True,
             download_rate_limit=0, retries=3, fragment_retries=3, socket_timeout=30, sleep_interval=0,
             prefer_ipv4=False, prefer_ipv6=False, continue_downloads=True, no_overwrites=False,
             use_browser_cookies=False, browser_cookies_source="none", proxy_enabled=False, proxy_url="", diagnostic_mode=False,
@@ -162,6 +164,7 @@ class Settings:
             background_image_path=_read_background_image_path(data, defaults.background_image_path),
             background_opacity=_read_float(data, "background_opacity", defaults.background_opacity, 0.10, 0.55),
             compact_mode=_read_bool(data, "compact_mode", defaults.compact_mode),
+            queue_view_mode=_read_choice(data, "queue_view_mode", defaults.queue_view_mode, ("cards", "list")),
             prevent_queue_duplicates=_read_bool(data, "prevent_queue_duplicates", defaults.prevent_queue_duplicates),
             warn_already_downloaded=_read_bool(data, "warn_already_downloaded", defaults.warn_already_downloaded),
             allow_redownload_completed=_read_bool(data, "allow_redownload_completed", defaults.allow_redownload_completed),
@@ -238,6 +241,17 @@ class Settings:
             window_x=x_position,
             window_y=y_position,
         )
+
+    def with_queue_view_mode(self, queue_view_mode: str) -> Self:
+        """Create settings with a validated queue view preference.
+
+        Args:
+            queue_view_mode: Requested queue renderer mode.
+
+        Returns:
+            Updated settings instance.
+        """
+        return replace(self, queue_view_mode=_normalize_choice(queue_view_mode, "cards", ("cards", "list")))
 
     def with_preferences(
         self,

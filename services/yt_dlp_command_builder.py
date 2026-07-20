@@ -104,6 +104,7 @@ class YtDlpCommandBuilder:
         no_overwrites: bool = False,
         use_browser_cookies: bool = False,
         browser_cookies_source: str = "none",
+        cookies_file_path: str = "",
         proxy_url: str = "",
     ) -> list[str]:
         """Build a future download command without executing it.
@@ -126,6 +127,8 @@ class YtDlpCommandBuilder:
         command: list[str] = [
             self.executable_name,
             "--newline",
+            "--print",
+            "after_move:__OUTPUT_PATH__%(filepath)s",
             "--windows-filenames",
             "-o",
             output_template,
@@ -137,7 +140,10 @@ class YtDlpCommandBuilder:
         elif prefer_ipv6: command.append("--force-ipv6")
         if continue_downloads: command.append("--continue")
         if no_overwrites: command.append("--no-overwrites")
-        if use_browser_cookies and browser_cookies_source in {"chrome", "edge", "firefox", "brave"}: command.extend(["--cookies-from-browser", browser_cookies_source])
+        if cookies_file_path.strip():
+            command.extend(["--cookies", cookies_file_path.strip()])
+        elif use_browser_cookies and browser_cookies_source in {"chrome", "edge", "firefox", "brave", "opera"}:
+            command.extend(["--cookies-from-browser", browser_cookies_source])
         if proxy_url.strip(): command.extend(["--proxy", proxy_url.strip()])
         if media_format is DownloadFormat.MP4:
             command.extend(["--merge-output-format", "mp4", "-f", self._video_format_selector(quality)])

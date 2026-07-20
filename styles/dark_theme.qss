@@ -199,6 +199,63 @@ QFrame#queueItemWidget[compact="true"] {
     margin: 0px;
 }
 
+QPushButton#queueViewButton {
+    min-width: 74px;
+    padding: 6px 10px;
+}
+
+QPushButton#queueViewButton:checked {
+    background-color: #1f6feb;
+    border-color: #58a6ff;
+    color: #ffffff;
+}
+
+QFrame#compactQueueHeader {
+    background-color: rgba(22, 27, 34, 230);
+    border: 1px solid #3d444d;
+    border-radius: 5px;
+    color: #c9d1d9;
+    font-weight: 600;
+}
+
+QFrame#compactQueueItemWidget {
+    background-color: rgba(31, 35, 40, 205);
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+QFrame#compactQueueItemWidget:hover {
+    background-color: rgba(47, 54, 61, 224);
+    border-color: #57606a;
+}
+
+QLabel#compactQueueTitle {
+    color: #ffffff;
+}
+
+QProgressBar#compactQueueProgressBar {
+    min-height: 12px;
+    border-radius: 4px;
+}
+
+QProgressBar#compactQueueProgressBar::chunk {
+    background-color: #1f9d55;
+    border-radius: 3px;
+}
+
+QProgressBar#compactQueueProgressBar[downloadState="Error"]::chunk {
+    background-color: #da3633;
+}
+
+QProgressBar#compactQueueProgressBar[downloadState="Cancelado"]::chunk {
+    background-color: #d29922;
+}
+
+QPushButton#compactQueueRemoveButton {
+    min-height: 24px;
+    padding: 3px 7px;
+}
+
 QLabel#queueItemMetadata,
 QLabel#queueItemProgress,
 QLabel#commandLabel {
@@ -241,6 +298,25 @@ QProgressBar {
 QProgressBar::chunk {
     background-color: #238636;
     border-radius: 4px;
+}
+
+QProgressBar#queueItemProgressBar {
+    min-height: 16px;
+    background-color: rgba(13, 17, 23, 235);
+    border-radius: 5px;
+}
+
+QProgressBar#queueItemProgressBar::chunk {
+    background-color: #1f9d55;
+    border-radius: 4px;
+}
+
+QProgressBar#queueItemProgressBar[downloadState="Error"]::chunk {
+    background-color: #da3633;
+}
+
+QProgressBar#queueItemProgressBar[downloadState="Cancelado"]::chunk {
+    background-color: #d29922;
 }
 
 QDialog#aboutDialog,

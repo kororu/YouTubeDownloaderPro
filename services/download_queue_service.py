@@ -17,6 +17,7 @@ class DownloadQueueService(QObject):
 
     item_changed: Signal = Signal(object)
     progress_changed: Signal = Signal(str, object)
+    download_completed: Signal = Signal(object, str)
     log_received: Signal = Signal(str, str)
     queue_finished: Signal = Signal()
 
@@ -119,9 +120,12 @@ class DownloadQueueService(QObject):
         self.item_changed.emit(updated_item)
         self.progress_changed.emit(item_id, progress)
 
-    def _handle_download_completed(self, item_id: str) -> None:
+    def _handle_download_completed(self, item_id: str, output_path: str) -> None:
         """Handle completed download."""
         self._update_item_status(item_id, DownloadStatus.COMPLETED)
+        completed_item: DownloadItem | None = self._items.get(item_id)
+        if completed_item is not None:
+            self.download_completed.emit(completed_item, output_path)
 
     def _handle_download_failed(self, item_id: str, error_message: str) -> None:
         """Handle failed download."""
